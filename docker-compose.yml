@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # 1. 데이터베이스
+  db:
+    image: mysql:8.0
+    container_name: shop1-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: shop1
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - shop1-network
+
+  # 2. 백엔드 (폴더명: back-end)
+  backend:
+    build: ./Back-end/shop-1/shop-1/shop-1
+    container_name: shop1-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    networks:
+      - shop1-network
+
+  # 3. 프론트엔드 (폴더명: front-end)
+  frontend:
+    build: ./front-end/frontend
+    container_name: shop1-Frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - shop1-network
+
+networks:
+  shop1-network:
+    driver: bridge
