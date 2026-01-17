@@ -1,10 +1,3 @@
-/**
- * * 소셜 로그인(Kakao/Naver) 이후 부족한 배송지 및 닉네임 정보를 입력받는 페이지
- * 실무 가이드: 
- * 1. 일반 회원가입과 동일한 디자인 시스템 및 유효성 검사 로직(Validation) 적용
- * 2. 모든 필드 입력 완료 전까지 버튼 비활성화(Constraint)
- * 3. 가입 완료 시 'auth-change' 이벤트를 통해 즉시 로그인 UI 반영
- * */
 "use client";
 
 import { fetchApi } from "@/lib/api";
