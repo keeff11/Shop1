@@ -184,6 +184,7 @@ public class UserAuthController {
      * 이메일 인증코드 발송
      *
      */
+
     @PostMapping("/email/send-code")
     public ResponseEntity<ApiResponse<String>> sendEmailCode(@RequestParam String email) {
         emailService.sendVerificationCode(email);
@@ -217,6 +218,7 @@ public class UserAuthController {
         }
         return cookieToken;
     }
+
 
     /**
      *

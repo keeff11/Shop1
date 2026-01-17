@@ -2,30 +2,45 @@
 .DS_Store
 Thumbs.db
 mysql_data/
-**/.git
 
-# [IDE Settings] - 프로젝트 곳곳의 설정 파일 제거
+# [IDE Settings]
 .idea/
 *.iml
+*.iws
+*.ipr
 .vscode/
 *.swp
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
 
-# [Backend - Spring Boot]
-**/build/
-**/.gradle/
-**/bin/
-**/out/
+# [Backend - Spring Boot / Java]
+Back-end/**/HELP.md
+Back-end/**/.gradle/
+Back-end/**/build/
+Back-end/**/bin/
+Back-end/**/out/
+Back-end/**/.apt_generated/
+!Back-end/**/gradle/wrapper/gradle-wrapper.jar
 
-# [Security] - 가장 중요 (보안 키 노출 방지)
+# [Security - 환경변수 및 비밀설정]
+.env
+.env.local
+**/src/main/resources/application-secret.yml
+**/src/main/resources/application-local.yml
+**/src/main/resources/application-secret.properties
+**/src/main/resources/application-local.properties
 **/src/main/resources/application.properties
-**/src/main/resources/application-*.properties
 
-# [Frontend - Next.js]
-Front-end/frontend/node_modules/
-Front-end/frontend/.next/
-Front-end/frontend/dist/
-Front-end/frontend/.env.local
-Front-end/frontend/.eslintcache
+# [Frontend - Next.js / Node]
+front-end/**/node_modules/
+front-end/**/.next/
+front-end/**/dist/
+front-end/**/.env*.local
+front-end/**/.eslintcache
 
 # [Mobile - Expo/React Native]
 mobile-app/node_modules/

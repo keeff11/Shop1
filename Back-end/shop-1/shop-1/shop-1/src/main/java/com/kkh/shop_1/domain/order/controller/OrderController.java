@@ -31,7 +31,6 @@ public class OrderController {
             @RequestBody OrderRequestDTO dto,
             @AuthenticationPrincipal Long userId
     ) {
-        log.info("Order request received: userId={}, totalAmount={}", userId, dto.getTotalAmount());
         OrderResponseDTO response = orderService.orderItems(userId, dto);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

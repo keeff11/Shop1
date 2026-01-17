@@ -11,4 +11,6 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findByItemCategory(ItemCategory itemCategory);
+
+    List<Item> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
 }

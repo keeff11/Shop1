@@ -4,14 +4,17 @@ import com.kkh.shop_1.common.s3.S3Service;
 import com.kkh.shop_1.domain.item.dto.CreateItemRequestDTO;
 import com.kkh.shop_1.domain.item.dto.ItemDetailDTO;
 import com.kkh.shop_1.domain.item.dto.ItemSummaryDTO;
+import com.kkh.shop_1.domain.item.dto.UpdateItemRequestDTO;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
 import com.kkh.shop_1.domain.item.entity.ItemImage;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,16 +40,90 @@ public class ItemService {
      * 상품 등록
      *
      */
-    public Long createItem(CreateItemRequestDTO request, List<MultipartFile> images, Long sellerId) {
-        validateRequest(request);
+    public Long createItem(CreateItemRequestDTO createItemRequestDTO,
+                           List<MultipartFile> images,
+                           Long sellerId) {
+        validateRequest(createItemRequestDTO);
 
         User seller = userService.findById(sellerId);
-        Item item = convertToEntity(request, seller);
+        Item item = convertToEntity(createItemRequestDTO, seller);
 
         itemRepository.save(item);
         processItemImages(item, images);
 
         return item.getId();
+    }
+
+    /**
+     *
+     * 상품 수정
+     *
+     */
+    @Transactional
+    public Long updateItem(Long itemId, UpdateItemRequestDTO request, List<MultipartFile> newImages, Long sellerId) {
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+
+        if (!item.getSeller().getId().equals(sellerId)) {
+            log.warn("[SECURITY_ALERT] Unauthorized update attempt: ItemID={}, UserID={}", itemId, sellerId);
+            throw new AccessDeniedException("수정 권한이 없습니다.");
+        }
+
+        item.update(
+                request.getName(),
+                request.getPrice(),
+                request.getQuantity(),
+                parseCategory(request.getCategory()),
+                request.getDescription()
+        );
+
+        if (newImages != null && !newImages.isEmpty()) {
+            if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().equals(DEFAULT_IMAGE)) {
+                s3Service.deleteImageByUrl(item.getThumbnailUrl());
+            }
+            item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
+            item.clearImages();
+            processItemImages(item, newImages);
+        }
+
+        log.info("[ITEM_UPDATE_SUCCESS] ItemID: {} updated by User: {}", itemId, sellerId);
+        return item.getId();
+    }
+
+    /**
+     *
+     * 상품 삭제
+     *
+     */
+    @Transactional
+    public void deleteItem(Long itemId, Long currentUserId) {
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
+
+        if (!item.getSeller().getId().equals(currentUserId)) {
+            log.warn("[SECURITY_ALERT] Unauthorized delete attempt: itemId={}, requesterId={}, sellerId={}",
+                    itemId, currentUserId, item.getSeller().getId());
+            throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
+        }
+
+        // S3 삭제
+        if (item.getThumbnailUrl() != null) {
+            s3Service.deleteImageByUrl(item.getThumbnailUrl());
+        }
+        item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
+        itemRepository.delete(item);
+
+        log.info("Item deleted successfully: itemId={}, sellerId={}", itemId, currentUserId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemSummaryDTO> getMyItems(Long sellerId) {
+
+        return itemRepository.findBySellerIdOrderByCreatedAtDesc(sellerId).stream()
+                .map(ItemSummaryDTO::from)
+                .toList();
     }
 
     /**
@@ -171,4 +248,6 @@ public class ItemService {
             throw new IllegalArgumentException("존재하지 않는 카테고리입니다: " + categoryName);
         }
     }
+
+
 }

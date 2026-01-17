@@ -78,6 +78,30 @@ public class Item {
                 (quantity > 0 ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK);
     }
 
+    // ======= 비즈니스 메서드 =======
+
+    /**
+     *
+     * 상품 수정
+     *
+     */
+    public void update(String name, int price, int quantity, ItemCategory category, String description) {
+        this.name = name;
+        this.price = price;
+        this.updateStock(quantity); // 기존에 만드신 재고 로직 활용
+        this.itemCategory = category;
+        this.description = description;
+    }
+
+    /**
+     *
+     * 이미지 리스트 초기화 (수정 시 기존 이미지 제거용)
+     *
+     */
+    public void clearImages() {
+        this.images.clear();
+    }
+
     /**
      *
      * 이미지 추가
