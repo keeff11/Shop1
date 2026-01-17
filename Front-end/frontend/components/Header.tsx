@@ -1,3 +1,9 @@
+/**
+ * * 통합 판매자 센터 접근 권한이 반영된 헤더 컴포넌트
+ * 실무 가이드: 
+ * 1. 개별 관리 기능(상품 등록, 쿠폰 발급)을 하나의 통합 대시보드(/seller)로 일원화함
+ * 2. 권한(RBAC)에 따른 선별적 UI 노출로 사용자 경험(UX) 최적화
+ * */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -99,16 +105,13 @@ export default function Header() {
     }
   };
 
-  const isCustomer = (user?.userRole ?? "").toUpperCase() === "CUSTOMER";
   const isAllItems = pathname === "/items";
   const isCategoryActive = (key: string) => pathname === `/items/category/${key}`;
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-50 border-b">
-      {/* 상단 레이아웃: py-3(상하 여백)을 통해 높이를 전체적으로 키움
-      */}
       <div className="flex justify-between items-center px-4 sm:px-10 py-4">
-        {/* 로고 영역: h-14로 크기 확대 */}
+        {/* 로고 영역 */}
         <div className="cursor-pointer flex items-center" onClick={() => router.push("/home")}>
           <img
             src="/Shop1.png"
@@ -119,7 +122,7 @@ export default function Header() {
           <span className="text-2xl font-black ml-2 sm:hidden text-primary">Shop1</span>
         </div>
 
-        {/* 우측 아이콘 영역: space-x-2로 간격 최적화 */}
+        {/* 우측 아이콘 영역 */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           {loading ? (
             <div className="h-10 w-28 animate-pulse bg-muted rounded-full" />
@@ -134,16 +137,19 @@ export default function Header() {
                 </Button>
               </div>
 
-              {/* 아이콘 버튼 공통 적용: 
-                  - size="icon" 대신 p-2.5 정도의 여백 부여
-                  - img 태그의 w-7 h-7 (기존보다 약 40% 확대)
-              */}
-              {!isCustomer && (
-                <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100" onClick={() => router.push("/items/create")} title="상품 등록">
-                  <img src="/add_item.png" alt="등록" className="w-7 h-7" />
+              {/* ✅ [수정] 통합 판매자 센터 버튼 (기존 등록, 쿠폰발급 버튼 대체) */}
+              {["ADMIN", "SELLER"].includes(user.userRole.toUpperCase()) && (
+                <Button 
+                  variant="ghost" 
+                  className="p-2.5 rounded-full hover:bg-gray-100" 
+                  onClick={() => router.push("/seller")} 
+                  title="판매자 센터"
+                >
+                  <img src="/seller.png" alt="판매자관리" className="w-7 h-7" />
                 </Button>
               )}
 
+              {/* 장바구니 버튼 */}
               <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100 relative" onClick={() => router.push("/cart")}>
                 <img src="/cart.png" alt="장바구니" className="w-7 h-7" />
                 {cartCount > 0 && (
@@ -153,23 +159,20 @@ export default function Header() {
                 )}
               </Button>
 
+              {/* 주문내역 버튼 */}
               <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100" onClick={() => router.push("/orders")} title="주문내역">
                 <img src="/order.png" alt="주문" className="w-7 h-7" />
               </Button>
 
+              {/* 쿠폰함 버튼 */}
               <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100" onClick={() => router.push("/coupons/received")} title="쿠폰함">
                 <img src="/coupon.png" alt="쿠폰" className="w-7 h-7" />
               </Button>
 
+              {/* 마이페이지 버튼 */}
               <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100" onClick={() => router.push("/mypage")} title="마이페이지">
                 <img src="/my_page.png" alt="MY" className="w-7 h-7" />
               </Button>
-
-              {["ADMIN", "SELLER"].includes(user.userRole.toUpperCase()) && (
-                <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100" onClick={() => router.push("/coupons/create")} title="쿠폰 생성">
-                  <img src="/coupon_issue.png" alt="발급" className="w-7 h-7" />
-                </Button>
-              )}
             </>
           ) : (
             <Button size="lg" className="px-6 font-bold text-base" onClick={() => router.push("/register")}>

@@ -61,7 +61,6 @@ export default function RegisterPage() {
    */
   const handleNaverLogin = () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID!;
-    // 백엔드 리팩토링 주소와 일치 확인
     const REDIRECT_URI = encodeURIComponent(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/naver/callback`);
     const STATE = Math.random().toString(36).substring(2, 15);
     

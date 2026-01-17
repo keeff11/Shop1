@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface CreateItemResponse {
-  data: string; // Assuming the API returns the item ID as a string on success
+  data: string;
 }
 
 interface ApiMessageResponse {

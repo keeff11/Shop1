@@ -31,7 +31,7 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
       try {
         const data = await fetchApi<OrdersApiResponse>("/orders", { cache: "no-store" });
-        setOrders(data.data); // ApiResponse 포맷: { success: true, data: [...] }
+        setOrders(data.data);
       } catch (err) {
         console.error(err);
       } finally {

@@ -4,16 +4,13 @@ import { fetchApi } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// ✅ 기본 이미지 설정 (public 폴더 내)
 const DEFAULT_IMAGE = "/no_image.jpg";
 
 interface Item {
   id: number;
   name: string;
   price: number;
-  // 백엔드 ItemResponseDTO에 추가된 필드
   thumbnailUrl?: string;
-  // images는 선택사항
   images?: { imageUrl: string }[];
 }
 
@@ -93,7 +90,6 @@ export default function CategoryPage() {
                       src={imageUrl}
                       alt={item.name}
                       onError={(e) => {
-                        // 엑박 발생 시 기본 이미지로 교체
                         e.currentTarget.src = DEFAULT_IMAGE;
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

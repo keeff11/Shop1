@@ -4,16 +4,13 @@ import { fetchApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// ✅ 기본 이미지 설정 (public 폴더 내)
 const DEFAULT_IMAGE = "/no_image.jpg";
 
 interface Item {
   id: number;
   name: string;
   price: number;
-  // 백엔드 ItemResponseDTO에 추가한 필드
   thumbnailUrl?: string; 
-  // 기존 images 필드는 상세 조회에서만 쓰이므로 여기선 선택사항으로 두거나 안 써도 됨
   images?: { imageUrl: string }[]; 
 }
 
@@ -55,7 +52,6 @@ export default function ItemsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {items.map((item) => {
-              // ✅ 1순위: thumbnailUrl, 2순위: images[0], 3순위: 기본 이미지
               const imageUrl = item.thumbnailUrl 
                 ? item.thumbnailUrl 
                 : (item.images && item.images.length > 0 ? item.images[0].imageUrl : DEFAULT_IMAGE);
@@ -72,7 +68,6 @@ export default function ItemsPage() {
                       src={imageUrl}
                       alt={item.name}
                       onError={(e) => {
-                        // ✅ 이미지 로드 실패 시(엑박) 기본 이미지로 교체
                         e.currentTarget.src = DEFAULT_IMAGE;
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

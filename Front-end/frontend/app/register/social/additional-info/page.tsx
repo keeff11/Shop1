@@ -1,37 +1,32 @@
-"use client";
-
 /**
- * * 소셜 로그인 이후 추가 정보를 입력받는 페이지
- * useSearchParams()로 인한 빌드 에러 방지를 위해 내용을 AdditionalInfoContent로 분리하고
- * Suspense 경계를 설정함
- */
+ * * 소셜 로그인(Kakao/Naver) 이후 부족한 배송지 및 닉네임 정보를 입력받는 페이지
+ * 실무 가이드: 
+ * 1. 일반 회원가입과 동일한 디자인 시스템 및 유효성 검사 로직(Validation) 적용
+ * 2. 모든 필드 입력 완료 전까지 버튼 비활성화(Constraint)
+ * 3. 가입 완료 시 'auth-change' 이벤트를 통해 즉시 로그인 UI 반영
+ * */
+"use client";
 
 import { fetchApi } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react"; // Suspense 추가
+import { useState, Suspense, useEffect } from "react";
 import DaumPostcode from "react-daum-postcode";
+import { toast } from "sonner";
 
-interface NicknameCheckApiResponse {
-  data: boolean;
-}
-
-/**
- * * 실제 폼 로직과 상태를 관리하는 내부 컴포넌트
- */
 function AdditionalInfoContent() {
   const searchParams = useSearchParams();
 
-  const provider = searchParams.get("provider"); // kakao / naver
-  const signUpToken =
-    provider === "kakao"
-      ? searchParams.get("kakaoToken")
-      : searchParams.get("naverToken");
+  // 소셜 인증 정보 추출
+  const provider = searchParams.get("provider"); 
+  const signUpToken = provider === "kakao" ? searchParams.get("kakaoToken") : searchParams.get("naverToken");
 
+  // ===== 상태 관리 =====
   const [userRole, setUserRole] = useState("CUSTOMER");
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
 
+  // ===== 주소 정보 =====
   const [zipCode, setZipCode] = useState("");
   const [roadAddress, setRoadAddress] = useState("");
   const [detailAddress, setDetailAddress] = useState("");
@@ -39,25 +34,34 @@ function AdditionalInfoContent() {
   const [recipientPhone, setRecipientPhone] = useState("");
   const [showPostcode, setShowPostcode] = useState(false);
 
+  const isFormFilled = 
+    nickname.trim() !== "" && 
+    zipCode !== "" && 
+    roadAddress !== "" && 
+    detailAddress.trim() !== "" && 
+    recipientName.trim() !== "" && 
+    recipientPhone.trim() !== "";
+
+  const isFormValid = isFormFilled && isNicknameChecked && !loading;
+
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
     setIsNicknameChecked(false);
   };
 
+  /** 닉네임 중복 체크 */
   const checkNickname = async () => {
-    if (!nickname.trim()) return alert("닉네임을 입력해주세요.");
+    if (!nickname.trim()) return toast.error("닉네임을 입력해주세요.");
     try {
-      const data = await fetchApi<NicknameCheckApiResponse>(`/auth/check-nickname?nickname=${nickname}`);
-      if (data.data === true) {
-        alert("이미 사용 중인 닉네임입니다.");
-        setIsNicknameChecked(false);
-      } else {
-        alert("사용 가능한 닉네임입니다.");
+      const res: any = await fetchApi(`/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+      if (res.data === false) {
         setIsNicknameChecked(true);
+        toast.success("사용 가능한 닉네임입니다.");
+      } else {
+        toast.error("이미 사용 중인 닉네임입니다.");
       }
     } catch (err) {
-      console.error(err);
-      alert("닉네임 중복 확인 중 오류가 발생했습니다.");
+      toast.error("닉네임 확인 중 오류가 발생했습니다.");
     }
   };
 
@@ -67,19 +71,15 @@ function AdditionalInfoContent() {
     setShowPostcode(false);
   };
 
+  /** 회원가입 최종 제출 */
   const handleSubmit = async () => {
-    if (!signUpToken || !provider) {
-      alert("유효하지 않은 접근입니다.");
-      return;
-    }
-    if (!isNicknameChecked) {
-      alert("닉네임 중복 확인을 해주세요.");
-      return;
-    }
-    if (!zipCode || !roadAddress || !detailAddress) {
-      alert("주소를 모두 입력해주세요.");
-      return;
-    }
+    if (!signUpToken || !provider) return toast.error("유효하지 않은 접근입니다.");
+    
+    if (!isNicknameChecked) return toast.error("닉네임 중복 확인을 해주세요.");
+    if (!zipCode) return toast.error("주소 검색을 해주세요.");
+    if (!detailAddress.trim()) return toast.error("상세 주소를 입력해주세요.");
+    if (!recipientName.trim()) return toast.error("수령인 성함을 입력해주세요.");
+    if (!recipientPhone.trim()) return toast.error("수령인 연락처를 입력해주세요.");
 
     setLoading(true);
     try {
@@ -98,112 +98,104 @@ function AdditionalInfoContent() {
           recipientPhone,
         }),
       });
-      alert("회원가입이 완료되었습니다!");
-      window.location.href = "/home";
+
+      toast.success("회원가입이 완료되었습니다! 자동으로 로그인됩니다.");
+      
+      // 헤더 UI 즉시 갱신
+      window.dispatchEvent(new Event("auth-change"));
+
+      setTimeout(() => {
+        window.location.href = "/home";
+      }, 1000);
     } catch (err: any) {
-      console.error(err);
-      alert(err.message || "추가 정보 입력 실패");
+      toast.error(err.message || "추가 정보 입력 실패");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-center">추가 정보 입력</h1>
-      
-      {/* 닉네임 입력부 */}
-      <div className="mb-4">
-        <label className="block mb-1 font-medium text-sm">닉네임</label>
-        <div className="flex gap-2">
-          <input
-            className="flex-1 border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            value={nickname}
-            onChange={handleNicknameChange}
-            placeholder="닉네임"
-          />
-          <button 
-            type="button" 
-            onClick={checkNickname}
-            className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-              isNicknameChecked 
-                ? 'bg-green-50 text-green-700 border-green-200 cursor-default' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
-            }`}
-            disabled={isNicknameChecked}
-          >
-            {isNicknameChecked ? "확인완료" : "중복확인"}
-          </button>
-        </div>
-      </div>
-
-      {/* 역할 선택부 */}
-      <div className="mb-4">
-        <label className="block mb-1 font-medium text-sm">역할</label>
-        <select
-          className="w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ring"
-          value={userRole}
-          onChange={(e) => setUserRole(e.target.value)}
-        >
-          <option value="CUSTOMER">CUSTOMER (구매자)</option>
-          <option value="SELLER">SELLER (판매자)</option>
-        </select>
-      </div>
-
-      {/* 주소 입력부 */}
-      <div className="mb-4">
-        <label className="block mb-1 font-medium text-sm">배송지 주소</label>
-        <div className="flex gap-2 mb-2">
-          <input value={zipCode} readOnly placeholder="우편번호" className="w-1/3 border px-3 py-2 rounded-lg bg-gray-100" />
-          <button
-            type="button"
-            onClick={() => setShowPostcode(true)}
-            className="flex-1 border px-3 py-2 rounded-lg bg-secondary text-primary hover:bg-secondary/80 font-medium text-sm"
-          >
-            주소 검색
-          </button>
-        </div>
-        {showPostcode && (
-          <div className="mb-3 border rounded-lg overflow-hidden bg-gray-50 p-2 relative">
-            <button type="button" onClick={() => setShowPostcode(false)} className="absolute top-2 right-2 text-gray-500 hover:text-black font-bold z-10">✕</button>
-            <div className="pt-6">
-              <DaumPostcode onComplete={handleAddressComplete} style={{ height: '400px' }} />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-10 px-4">
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-gray-100">
+        <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">소셜 계정 추가 정보</h1>
+        
+        <div className="space-y-5">
+          {/* 닉네임 영역 */}
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-gray-600">닉네임</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={nickname}
+                onChange={handleNicknameChange}
+                placeholder="사용할 닉네임"
+                className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none transition"
+              />
+              <button 
+                type="button" 
+                onClick={checkNickname}
+                className="px-3 py-2 text-xs font-bold rounded-lg border bg-gray-50 hover:bg-gray-100 disabled:bg-blue-50 disabled:text-blue-600 transition"
+                disabled={isNicknameChecked}
+              >
+                {isNicknameChecked ? "확인완료" : "중복확인"}
+              </button>
             </div>
           </div>
-        )}
-        <input className="w-full border px-3 py-2 mb-2 rounded-lg bg-gray-100" value={roadAddress} readOnly placeholder="도로명 주소" />
-        <input className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} placeholder="상세 주소" />
-      </div>
 
-      {/* 수령인 정보 */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div>
-          <label className="block mb-1 font-medium text-sm">수령인 이름</label>
-          <input className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium text-sm">연락처</label>
-          <input className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} placeholder="010-1234-5678" />
+          {/* 역할 선택 영역 */}
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-gray-600">회원 유형</label>
+            <select
+              value={userRole}
+              onChange={(e) => setUserRole(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-primary outline-none cursor-pointer"
+            >
+              <option value="CUSTOMER">일반 구매자 (Customer)</option>
+              <option value="SELLER">판매자 (Seller)</option>
+            </select>
+          </div>
+
+          {/* 주소 정보 영역 */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-sm font-semibold text-gray-600">배송지 정보</label>
+            <div className="flex gap-2">
+              <input value={zipCode} readOnly className="w-1/3 px-3 py-2 border rounded-lg bg-gray-50 text-gray-500 text-sm" placeholder="우편번호"/>
+              <button type="button" onClick={() => setShowPostcode(true)} className="flex-1 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700 transition">주소 검색</button>
+            </div>
+            {showPostcode && (
+              <div className="border rounded-lg p-2 relative shadow-sm z-10 bg-white">
+                <button type="button" onClick={() => setShowPostcode(false)} className="absolute top-2 right-2 font-bold p-1 hover:text-red-500 transition">✕</button>
+                <div className="pt-6"><DaumPostcode onComplete={handleAddressComplete} style={{ height: '400px' }} /></div>
+              </div>
+            )}
+            <input value={roadAddress} readOnly className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-500 text-sm" placeholder="도로명 주소"/>
+            <input value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-primary" placeholder="상세 주소를 입력하세요"/>
+            <div className="grid grid-cols-2 gap-2">
+              <input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm" placeholder="수령인 성함"/>
+              <input value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm" placeholder="수령인 연락처"/>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!isFormValid}
+            className={`w-full py-4 rounded-xl font-bold text-lg transition shadow-lg mt-6 ${
+              isFormValid 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20" 
+                : "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+            }`}
+          >
+            {loading ? "처리 중..." : "가입 및 로그인 완료"}
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-bold text-lg hover:bg-primary/90 transition disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md"
-      >
-        {loading ? "처리중..." : "가입 완료"}
-      </button>
     </div>
   );
 }
 
-/**
- * * 메인 페이지 컴포넌트 (빌드 에러 방지를 위한 Suspense 적용)
- */
 export default function AdditionalInfoPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center mt-20">입력 양식을 불러오는 중...</div>}>
+    <Suspense fallback={<div className="flex justify-center mt-20 text-gray-500 animate-pulse">양식을 불러오는 중입니다...</div>}>
       <AdditionalInfoContent />
     </Suspense>
   );
