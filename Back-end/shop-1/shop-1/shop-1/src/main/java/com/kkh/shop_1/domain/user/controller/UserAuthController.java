@@ -25,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+//@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class UserAuthController {
 
     private final UserService userService;
@@ -33,7 +33,7 @@ public class UserAuthController {
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
 
-    @Value("${app.frontend-url:http://localhost:3000}")
+    @Value("${app.frontend-url}")
     private String frontendUrl;
 
     private static final String ACCESS_TOKEN = "accessToken";
