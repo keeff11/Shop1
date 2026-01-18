@@ -94,7 +94,6 @@ function AdditionalInfoContent() {
 
       toast.success("회원가입이 완료되었습니다! 자동으로 로그인됩니다.");
       
-      // 헤더 UI 즉시 갱신
       window.dispatchEvent(new Event("auth-change"));
 
       setTimeout(() => {
