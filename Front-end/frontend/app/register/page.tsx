@@ -36,7 +36,7 @@ export default function RegisterPage() {
    **/
   const handleKakaoLogin = () => {
     const REST_API_KEY = process.env.NEXT_PUBLIC_KAKAO_REST_KEY!;
-    const REDIRECT_BASE = process.env.NEXT_PUBLIC_REDIRECT_URI_BASE;
+    const REDIRECT_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
     const REDIRECT_URI = encodeURIComponent(`${REDIRECT_BASE}/auth/kakao/callback`);
     
     const kakaoAuthUrl = `${process.env.NEXT_PUBLIC_KAKAO_AUTH_URL}/oauth/authorize?response_type=code&client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}`;
