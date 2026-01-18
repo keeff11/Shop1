@@ -219,7 +219,6 @@ public class UserAuthController {
         return cookieToken;
     }
 
-
     /**
      *
      * 액세스 및 리프레시 토큰을 응답 쿠키에 설정함
