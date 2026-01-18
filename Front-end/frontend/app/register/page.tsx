@@ -5,10 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 
-/**
- * * 로그인 및 회원가입 페이지
- * 백엔드 통합 콜백 구조(Web Redirect)에 맞춰 수정됨
- * */
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,9 +22,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      // 쿠키 갱신을 위해 브라우저 수준에서 이동
       window.location.href = "/home";
-
     } catch (err) {
       console.error(err);
       alert("로그인 중 오류가 발생했습니다.");
@@ -36,26 +30,28 @@ export default function RegisterPage() {
   };
 
   /**
-   * * 카카오 로그인 핸들러
-   * REDIRECT_URI를 백엔드 서버(:8080)로 설정
-   * */
+   * 
+   * 카카오 로그인 핸들러
+   *
+   **/
   const handleKakaoLogin = () => {
     const REST_API_KEY = process.env.NEXT_PUBLIC_KAKAO_REST_KEY!;
-    // [수정] 프론트 주소가 아닌 백엔드의 콜백 엔드포인트를 지정합니다.
-    const REDIRECT_URI = encodeURIComponent("http://localhost:8080/auth/kakao/callback");
+    const REDIRECT_BASE = process.env.NEXT_PUBLIC_REDIRECT_URI_BASE;
+    const REDIRECT_URI = encodeURIComponent(`${REDIRECT_BASE}/auth/kakao/callback`);
     
     const kakaoAuthUrl = `${process.env.NEXT_PUBLIC_KAKAO_AUTH_URL}/oauth/authorize?response_type=code&client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}`;
     window.location.href = kakaoAuthUrl;
   };
 
   /**
-   * * 네이버 로그인 핸들러
-   * REDIRECT_URI를 백엔드 서버(:8080)로 설정
-   * */
+   * 
+   * 네이버 로그인 핸들러
+   * 
+   **/
   const handleNaverLogin = () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID!;
-    // [수정] 프론트 주소가 아닌 백엔드의 콜백 엔드포인트를 지정합니다.
-    const REDIRECT_URI = encodeURIComponent("http://localhost:8080/auth/naver/callback");
+    const REDIRECT_BASE = process.env.NEXT_PUBLIC_REDIRECT_URI_BASE;
+    const REDIRECT_URI = encodeURIComponent(`${REDIRECT_BASE}/auth/naver/callback`);
     const STATE = Math.random().toString(36).substring(2, 15);
     
     const naverAuthUrl = `${process.env.NEXT_PUBLIC_NAVER_AUTH_URL}/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}`;
