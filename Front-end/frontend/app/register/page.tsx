@@ -50,7 +50,7 @@ export default function RegisterPage() {
    **/
   const handleNaverLogin = () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID!;
-    const REDIRECT_BASE = process.env.NEXT_PUBLIC_REDIRECT_URI_BASE;
+    const REDIRECT_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
     const REDIRECT_URI = encodeURIComponent(`${REDIRECT_BASE}/auth/naver/callback`);
     const STATE = Math.random().toString(36).substring(2, 15);
     

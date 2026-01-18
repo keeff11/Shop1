@@ -9,13 +9,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -32,24 +35,23 @@ public class SecurityConfig {
             "/orders/**",
             "/user/**",
             "/coupons/**",
+            "/error",
+            "/favicon.ico"
     };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-                // 1. 여기서 아래의 설정을 가져다 씁니다.
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 2. [중요] Preflight(OPTIONS) 요청은 토큰 검사 없이 무조건 허용
-//                        .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
-//                        .requestMatchers(WHITELIST).permitAll()
-//                        .anyRequest().authenticated()
-                        .anyRequest().permitAll()
+                        .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
+                        .requestMatchers(WHITELIST).permitAll()
+                        .anyRequest().authenticated()
                 )
+                // 필터 순서 정의
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -62,16 +64,14 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 3. 중복된 corsFilter() 메서드는 삭제했습니다. 이 메서드 하나면 충분합니다.
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-
-        config.addAllowedOriginPattern("*"); // 모든 IP 허용
-        config.addAllowedHeader("*");        // 모든 헤더 허용
-        config.addAllowedMethod("*");        // 모든 메서드 허용
-        config.setAllowCredentials(true);    // 인증 정보 허용
+        config.setAllowedOrigins(List.of("http://52.78.173.129:3000", "http://localhost:3000"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
 
         source.registerCorsConfiguration("/**", config);
         return source;
