@@ -1,4 +1,4 @@
-name: Java CI/CD with Docker
+name: Full Stack CI/CD (Spring + Next.js)
 
 on:
   push:
@@ -11,39 +11,52 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # 1. Java 17 설정
+    # --- [BACK-END BUILD] ---
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 2. application.properties 생성 (중첩된 경로 반영)
     - name: make application.properties
       run: |
         mkdir -p ./Back-end/shop-1/shop-1/shop-1/src/main/resources
         echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./Back-end/shop-1/shop-1/shop-1/src/main/resources/application.properties
 
-    # 3. Gradle 빌드 (중첩된 경로에서 실행)
     - name: Build with Gradle
       working-directory: ./Back-end/shop-1/shop-1/shop-1
       run: |
         chmod +x ./gradlew
         ./gradlew clean build -x test
 
-    # 4. 빌드된 JAR 파일을 EC2의 홈 디렉토리(/home/ubuntu)로 전송
-    # strip_components: 7을 통해 중간 폴더들을 다 제거하고 파일만 전송합니다.
-    - name: Copy JAR to EC2
+    # --- [FRONT-END BUILD] ---
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: make .env.local
+      run: echo "${{ secrets.ENV_LOCAL }}" > ./Front-end/.env.local # 폴더명 확인 필요
+
+    - name: Install Frontend Dependencies & Build
+      working-directory: ./Front-end # 폴더명 확인 필요
+      run: |
+        npm install
+        npm run build
+
+    # --- [TRANSFER FILES] ---
+    - name: Copy JAR and Front Files to EC2
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "Back-end/shop-1/shop-1/shop-1/build/libs/*.jar"
-        target: "/home/ubuntu"
-        strip_components: 7
+        # 백엔드 jar와 프론트엔드 폴더 전체를 전송
+        source: "Back-end/shop-1/shop-1/shop-1/build/libs/*.jar,Front-end/.next,Front-end/public,Front-end/package.json,Front-end/next.config.js"
+        target: "/home/ubuntu/deploy"
+        strip_components: 0 # 경로 유지를 위해 0으로 설정 후 서버에서 정리
 
-    # 5. EC2 서버에서 도커 실행
+    # --- [DEPLOY TO EC2] ---
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -51,22 +64,19 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 기존 앱 컨테이너 중지 및 삭제
+          # 1. 파일 정리 (홈 디렉토리로 이동)
+          cp ~/deploy/Back-end/shop-1/shop-1/shop-1/build/libs/shop-1-0.0.1-SNAPSHOT.jar ~/app.jar
+          cp -r ~/deploy/Front-end/* ~/front/
+          
+          # 2. 백엔드 실행
           sudo docker stop shop-app || true
           sudo docker rm shop-app || true
-          
-          # 홈 디렉토리로 이동
-          cd ~
-          
-          # 기존에 남아있을 수 있는 불필요한 plain jar 삭제 (충돌 방지)
-          rm -f *-plain.jar
-          
-          # 새로운 이미지 빌드 (서버의 Dockerfile 활용)
           sudo docker build -t shop-app .
+          sudo docker run -d --name shop-app -p 8080:8080 --link shop-mysql:shop-mysql shop-app
           
-          # 컨테이너 실행
-          sudo docker run -d \
-            --name shop-app \
-            -p 8080:8080 \
-            --link shop-mysql:shop-mysql \
-            shop-app
+          # 3. 프론트엔드 실행 (서버에 프론트용 Dockerfile이 있어야 함)
+          sudo docker stop shop-front || true
+          sudo docker rm shop-front || true
+          cd ~/front
+          sudo docker build -t shop-front .
+          sudo docker run -d --name shop-front -p 3000:3000 shop-front
