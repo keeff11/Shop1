@@ -92,6 +92,7 @@ function AdditionalInfoContent() {
         }),
       });
 
+      
       toast.success("회원가입이 완료되었습니다! 자동으로 로그인됩니다.");
       
       window.dispatchEvent(new Event("auth-change"));
