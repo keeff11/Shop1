@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
 
@@ -51,7 +50,6 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        # 필요한 파일들만 골라서 서버의 ~/deploy 폴더로 전송
         source: "Back-end/shop-1/shop-1/shop-1/build/libs/*.jar,Front-end/frontend/.next,Front-end/frontend/public,Front-end/frontend/package.json,Front-end/frontend/next.config.js"
         target: "/home/ubuntu/deploy"
         strip_components: 0
@@ -64,26 +62,47 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 백엔드 배포
-          cp ~/deploy/Back-end/shop-1/shop-1/shop-1/build/libs/shop-1-0.0.1-SNAPSHOT.jar ~/app.jar
+          # 백엔드 배포 준비
+          mkdir -p ~/app
+          cp ~/deploy/Back-end/shop-1/shop-1/shop-1/build/libs/*.jar ~/app/app.jar
+          
+          # 백엔드 Dockerfile 생성
+          echo "FROM openjdk:17-jdk-slim
+          COPY app.jar app.jar
+          ENTRYPOINT [\"java\", \"-jar\", \"/app.jar\"]" > ~/app/Dockerfile
+
+          # 백엔드 실행
           sudo docker stop shop-app || true
           sudo docker rm shop-app || true
-          sudo docker build -t shop-app /home/ubuntu
-          sudo docker run -d --name shop-app -p 8080:8080 --link shop-mysql:shop-mysql shop-app
-          
+          cd ~/app
+          sudo docker build -t shop-app .
+          sudo docker run -d \
+            --name shop-app \
+            -p 8080:8080 \
+            --network shop-network \
+            -e SPRING_DATASOURCE_URL=jdbc:mysql://shop-mysql:3306/shop1 \
+            -e SPRING_DATASOURCE_USERNAME=root \
+            -e SPRING_DATASOURCE_PASSWORD=root \
+            -e KAKAO_REDIRECT_URI=http://${{ secrets.EC2_HOST }}:8080/auth/kakao/callback \
+            shop-app
+
           # 프론트엔드 배포 준비
           mkdir -p ~/front
           cp -r ~/deploy/Front-end/frontend/.next ~/front/
           cp -r ~/deploy/Front-end/frontend/public ~/front/
           cp ~/deploy/Front-end/frontend/package.json ~/front/
           cp ~/deploy/Front-end/frontend/next.config.js ~/front/
-          
-          # 프론트엔드 실행
+
+          echo "FROM node:20-slim
+          WORKDIR /app
+          COPY . .
+          RUN npm install --production
+          CMD [\"npm\", \"start\"]" > ~/front/Dockerfile
+
           sudo docker stop shop-front || true
           sudo docker rm shop-front || true
           cd ~/front
           sudo docker build -t shop-front .
           sudo docker run -d --name shop-front -p 3000:3000 shop-front
-          
-          # 배포 후 잔해 정리
+
           rm -rf ~/deploy
