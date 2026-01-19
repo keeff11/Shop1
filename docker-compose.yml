@@ -41,4 +41,5 @@ services:
 
 networks:
   shop1-network:
+    name: shop1-network  # 네트워크 이름을 강제로 고정
     driver: bridge
