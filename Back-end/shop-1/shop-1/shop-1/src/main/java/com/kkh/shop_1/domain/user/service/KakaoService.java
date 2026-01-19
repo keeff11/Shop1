@@ -61,6 +61,8 @@ public class KakaoService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
+        log.info("### 카카오 토큰 요청 시도 ###");
+        log.info("보내는 Redirect URI: [{}]", kakaoRedirectUri);
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
             JsonNode json = objectMapper.readTree(response.getBody());
