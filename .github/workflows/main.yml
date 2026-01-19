@@ -14,18 +14,16 @@ jobs:
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ubuntu
-          key: ${{ secrets.SERVER_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~
-            
             git pull origin main
             
             mkdir -p ./Back-end/shop-1/shop-1/shop-1/src/main/resources
             echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./Back-end/shop-1/shop-1/shop-1/src/main/resources/application.properties
-            
-            # docker-compose.yml의 build 경로가 ./front-end/frontend 인 경우
+
             mkdir -p ./front-end/frontend
             echo "${{ secrets.ENV_LOCAL }}" > ./front-end/frontend/.env.local
 
