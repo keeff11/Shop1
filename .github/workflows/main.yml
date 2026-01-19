@@ -18,14 +18,15 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~
+            cd ~/shop1
+            
             git pull origin main
             
             mkdir -p ./Back-end/shop-1/shop-1/shop-1/src/main/resources
             echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./Back-end/shop-1/shop-1/shop-1/src/main/resources/application.properties
-
+            
             mkdir -p ./front-end/frontend
             echo "${{ secrets.ENV_LOCAL }}" > ./front-end/frontend/.env.local
-
+            
             sudo docker compose down
             sudo docker compose up -d --build
