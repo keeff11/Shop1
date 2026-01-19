@@ -1,5 +1,4 @@
 services:
-  # 1. 데이터베이스
   db:
     image: mysql:8.0
     container_name: shop1-db
@@ -13,22 +12,21 @@ services:
     networks:
       - shop1-network
 
-  # 2. 백엔드
   backend:
     build: ./Back-end/shop-1/shop-1/shop-1
     container_name: shop1-backend
+    restart: always
     ports:
       - "8080:8080"
     depends_on:
       - db
     environment:
-      DB_HOST: db
+      DB_HOST: shop1-db
       DB_USERNAME: root
       DB_PASSWORD: root
     networks:
       - shop1-network
 
-  # 3. 프론트엔드 
   frontend:
     build: ./Front-end/frontend
     container_name: shop1-Frontend
@@ -41,5 +39,5 @@ services:
 
 networks:
   shop1-network:
-    name: shop1-network  # 네트워크 이름을 강제로 고정
+    name: shop1-network
     driver: bridge
