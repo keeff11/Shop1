@@ -22,7 +22,7 @@ function OAuthCallbackContent() {
     const fetchLogin = async () => {
       try {
         const data: KakaoCallbackResponse = await fetchApi(
-          "/auth/kakao/callback",
+          "/auth/kakao/callbxack",
           {
             method: "POST",
             credentials: "include",

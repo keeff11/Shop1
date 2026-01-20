@@ -5,16 +5,13 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* --- 히어로 섹션 (Hero Section) --- */}
       <main className="relative overflow-hidden">
-        {/* 배경 효과: 세련된 그라데이션 포인트 */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-blue-100 rounded-full blur-[120px] opacity-50"></div>
           <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[50%] bg-purple-100 rounded-full blur-[100px] opacity-40"></div>
         </div>
 
         <section className="flex flex-col justify-center items-center h-[calc(100vh-120px)] px-6 text-center">
-          {/* 배지 스타일 */}
           <span className="px-4 py-1.5 mb-6 text-sm font-semibold tracking-wide text-primary bg-primary/10 rounded-full animate-bounce">
             New Concept Shopping Mall
           </span>
@@ -33,7 +30,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
-              href="/products" // 실제 상품 페이지 경로로 수정하세요
+              href="/items"
               className="px-8 py-4 bg-gray-900 text-white text-lg font-bold rounded-xl hover:bg-gray-800 transition-all shadow-xl hover:-translate-y-1"
             >
               전체 상품 보러가기
@@ -43,14 +40,12 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* 하단 스크롤 유도 화살표 */}
           <div className="absolute bottom-10 animate-pulse text-gray-400">
             <p className="text-xs uppercase tracking-widest">Scroll Down</p>
           </div>
         </section>
       </main>
 
-      {/* --- 서비스 특징 섹션 (간단 추가) --- */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
           <div>
