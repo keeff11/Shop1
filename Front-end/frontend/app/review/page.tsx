@@ -1,10 +1,12 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
-import { fetchApi } from "@/lib/api"; // 원래 쓰시던 방식 그대로 사용
+import { useState, useRef, useEffect, Suspense } from "react"; // ★ Suspense 추가
+import { fetchApi } from "@/lib/api";
+import { toast } from "react-hot-toast"; // ★ 토스트 추가
 
-export default function ReviewPage() {
+// 실제 리뷰 폼 컴포넌트 분리
+function ReviewFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -20,7 +22,7 @@ export default function ReviewPage() {
 
   useEffect(() => {
     if (!orderItemId) {
-      alert("잘못된 접근입니다.");
+      toast.error("잘못된 접근입니다.");
       router.back();
     }
   }, [orderItemId, router]);
@@ -29,7 +31,7 @@ export default function ReviewPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     if (imageFiles.length + files.length > 5) {
-      alert("이미지는 최대 5장까지 첨부 가능합니다.");
+      toast.error("이미지는 최대 5장까지 첨부 가능합니다.");
       return;
     }
     const newFiles = Array.from(files);
@@ -49,42 +51,37 @@ export default function ReviewPage() {
 
   const handleSubmit = async () => {
     if (content.length < 10) {
-      alert("리뷰 내용을 10자 이상 작성해주세요.");
+      toast.error("리뷰 내용을 10자 이상 작성해주세요.");
       return;
     }
 
     setLoading(true);
+    // 로딩 토스트 시작
+    const toastId = toast.loading("리뷰를 등록 중입니다...");
+
     try {
       const formData = new FormData();
-      
-      // 1. 텍스트 데이터 (Blob으로 감싸서 application/json 타입임을 명시)
       const reviewData = { rating, content };
       formData.append(
         "review",
         new Blob([JSON.stringify(reviewData)], { type: "application/json" })
       );
 
-      // 2. 이미지 파일들 추가
       imageFiles.forEach((file) => {
         formData.append("images", file);
       });
 
-      // ★ [핵심] 원래 쓰시던 fetchApi를 호출합니다.
-      // 쿼리 파라미터로 orderItemId를 넘깁니다.
       await fetchApi(`/reviews?orderItemId=${orderItemId}`, {
         method: "POST",
-        body: formData, // FormData를 그대로 전달
-        // ★ [주의] fetchApi 내부 로직에서 body가 FormData인 경우 
-        // headers['Content-Type']을 자동으로 삭제하거나 세팅하지 않도록 되어있어야 합니다.
+        body: formData,
         credentials: "include", 
       });
 
-      alert("리뷰가 등록되었습니다!");
+      toast.success("리뷰가 소중하게 등록되었습니다! ✨", { id: toastId });
       router.back(); 
     } catch (err: any) {
-      console.error("리뷰 등록 에러 상세:", err);
-      // 만약 여기서 500이나 400 에러가 난다면 fetchApi가 Content-Type을 강제하고 있을 확률이 높습니다.
-      alert(`등록 실패: ${err.message || "서버 오류"}`);
+      console.error("리뷰 등록 에러:", err);
+      toast.error(`등록 실패: ${err.message || "서버 오류"}`, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -120,7 +117,7 @@ export default function ReviewPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">사진 첨부 ({imageFiles.length}/5)</label>
             <div className="flex gap-3 overflow-x-auto pb-2 min-h-[100px]">
               <div 
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => !loading && fileInputRef.current?.click()}
                 className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-colors"
               >
                 <span className="text-2xl">+</span>
@@ -141,5 +138,18 @@ export default function ReviewPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 메인 페이지: Suspense Boundary 추가
+export default function ReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <ReviewFormContent />
+    </Suspense>
   );
 }
