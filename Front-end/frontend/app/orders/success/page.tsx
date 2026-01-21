@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react"; // ★ Suspense 추가
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchApi } from "@/lib/api";
+import { toast } from "react-hot-toast"; // 앞서 설정한 toast 적용
 
-export default function OrderSuccessPage() {
+// 실제 결제 승인 로직을 수행하는 내부 컴포넌트
+function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -17,7 +19,7 @@ export default function OrderSuccessPage() {
     const pgToken = searchParams.get("pg_token");
 
     if (!orderId || !pgToken) {
-      alert("유효하지 않은 결제 정보입니다.");
+      toast.error("유효하지 않은 결제 정보입니다.");
       router.replace("/cart");
       return;
     }
@@ -26,26 +28,25 @@ export default function OrderSuccessPage() {
       processedRef.current = true;
       
       try {
-        // 1. 백엔드 승인 API 호출 (이때 백엔드에서 장바구니 DB 데이터가 삭제됨)
+        // 1. 백엔드 승인 API 호출
         await fetchApi(
           `/orders/payment/approve?orderId=${orderId}&pg_token=${pgToken}`,
           { credentials: "include" }
         );
 
-        // 2. ★ [핵심] 헤더에게 장바구니 갱신 신호 보내기
-        // 백엔드에서 삭제되었으니, 헤더가 다시 조회하면 0개(또는 남은 개수)가 됩니다.
+        // 2. 헤더 장바구니 갱신 신호
         window.dispatchEvent(new Event("cart-updated"));
 
         setStatus("success");
         sessionStorage.removeItem("checkoutData");
         
-        alert("결제가 정상적으로 완료되었습니다!");
+        toast.success("결제가 정상적으로 완료되었습니다! 🎉");
         router.replace(`/orders/detail/${orderId}`);
         
       } catch (error) {
         console.error("결제 승인 실패:", error);
         setStatus("error");
-        alert("결제 승인 처리에 실패했습니다.");
+        toast.error("결제 승인 처리에 실패했습니다.");
         router.replace("/cart");
       }
     };
@@ -67,5 +68,20 @@ export default function OrderSuccessPage() {
         {status === "error" && <h2 className="text-xl font-bold text-red-600">결제 실패</h2>}
       </div>
     </div>
+  );
+}
+
+// 메인 페이지 컴포넌트: 빌드 오류 방지를 위해 Suspense로 래핑
+export default function OrderSuccessPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
