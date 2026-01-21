@@ -21,13 +21,15 @@ public class ItemDetailDTO {
     private String stockStatus;
     private String status;
     private String sellerNickname;
+    private String thumbnailUrl; // 썸네일도 상세에 필요할 수 있음
     private List<String> images;
 
-    /**
-     *
-     * Item entity -> DTO 변환
-     *
-     */
+    // ★ [추가] 프론트엔드 요구 필드
+    private double averageRating;
+    private int reviewCount;
+    private int viewCount;
+    private String createdAt; // 날짜 포맷팅 필요 시 String 변환 추천
+
     public static ItemDetailDTO from(Item item) {
         return ItemDetailDTO.builder()
                 .id(item.getId())
@@ -39,9 +41,15 @@ public class ItemDetailDTO {
                 .stockStatus(item.getStockStatus().name())
                 .status(item.getStatus().name())
                 .sellerNickname(item.getSeller().getNickname())
+                .thumbnailUrl(item.getThumbnailUrl())
                 .images(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .toList())
+                // ★ [추가] 필드 매핑
+                .averageRating(item.getAverageRating())
+                .reviewCount(item.getReviewCount())
+                .viewCount(item.getViewCount())
+                .createdAt(item.getCreatedAt().toString()) // ISO 8601 형식
                 .build();
     }
 }

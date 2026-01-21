@@ -38,14 +38,14 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
+    // ★ [추가] 결제 수단 저장 (승인 단계에서 필요)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type")
+    private PaymentType paymentType;
+
     @Column(name = "tid", unique = true)
     private String tid;
 
-    /**
-     *
-     * 내부용
-     *
-     */
     @Builder(access = AccessLevel.PRIVATE)
     private Order(User user, Address address) {
         this.user = user;
@@ -54,94 +54,52 @@ public class Order {
         this.orderDate = LocalDateTime.now();
     }
 
-    /**
-     *
-     * 주문 생성
-     *
-     */
     public static Order create(User user, Address address) {
-        Order order = Order.builder()
+        return Order.builder()
                 .user(user)
                 .address(address)
                 .build();
-
-        user.addOrder(order);
-        return order;
     }
 
-    /**
-     *
-     * 유저 정보 할당
-     *
-     */
+    // ★ [추가] 결제 타입 설정 메서드
+    public void setPaymentType(PaymentType paymentType) {
+        this.paymentType = paymentType;
+    }
+
     public void assignUser(User user) {
         this.user = user;
     }
 
-    /**
-     *
-     * 주문 상품 추가 및 주문 상품의 주문 정보 설정
-     *
-     */
     public void addOrderItem(OrderItem orderItem) {
         this.orderItems.add(orderItem);
         orderItem.assignOrder(this);
     }
 
-    /**
-     *
-     * 결제 완료 처리 및 TID 저장
-     *
-     */
     public void completePayment(String tid) {
         if (this.status != OrderStatus.PAYMENT_PENDING) {
             throw new IllegalStateException("결제 대기 중인 주문만 결제 완료 처리가 가능합니다.");
         }
         this.status = OrderStatus.PAID;
-        this.tid = tid;
+        // TID는 이미 ready 단계나 승인 요청 DTO 생성 시점에 갱신되지만, 확실히 하기 위해 저장
+        if (tid != null) this.tid = tid;
     }
 
-    /**
-     *
-     * 주문 취소 처리 및 주문 상품 재고 복구
-     *
-     */
     public void cancel() {
         if (this.status == OrderStatus.DELIVERED) {
             throw new IllegalStateException("이미 배송된 상품은 취소가 불가능합니다.");
         }
-
         this.status = OrderStatus.CANCELLED;
         this.orderItems.forEach(OrderItem::cancel);
     }
 
-    /**
-     *
-     * 주문 상품 전체 금액 합계 계산
-     *
-     */
     public int getTotalAmount() {
-        return orderItems.stream()
-                .mapToInt(OrderItem::getTotalPrice)
-                .sum();
+        return orderItems.stream().mapToInt(OrderItem::getTotalPrice).sum();
     }
 
-    /**
-     *
-     * 주문 상품 전체 수량 합계 계산
-     *
-     */
     public int getTotalQuantity() {
-        return orderItems.stream()
-                .mapToInt(OrderItem::getQuantity)
-                .sum();
+        return orderItems.stream().mapToInt(OrderItem::getQuantity).sum();
     }
 
-    /**
-     *
-     * TID 업데이트 (결제 준비 요청 시점)
-     *
-     */
     public void updateTid(String tid) {
         this.tid = tid;
     }

@@ -162,4 +162,8 @@ public class CartItemService {
     public void deleteSelectedItems(User user, List<Long> itemIds) {
         cartItemRepository.deleteSelectedItemsByUser(user, itemIds);
     }
+
+    public void deleteCartItemsByUserIdAndItemIds(Long userId, List<Long> orderedItemIds) {
+        cartItemRepository.deleteCartItemsByUserIdAndItemIds(userId, orderedItemIds);
+    }
 }

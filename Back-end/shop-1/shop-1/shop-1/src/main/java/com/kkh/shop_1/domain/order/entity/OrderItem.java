@@ -7,11 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- *
- * 주문 상품 엔티티
- *
- */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -41,6 +36,9 @@ public class OrderItem {
 
     @Column(nullable = false)
     private int finalPrice;      // 최종 결제 단가
+
+    @Column(nullable = false)
+    private boolean reviewWritten = false;
 
     /**
      *
@@ -101,5 +99,14 @@ public class OrderItem {
      */
     public int getTotalPrice() {
         return getFinalPrice() * getQuantity();
+    }
+
+    /**
+     *
+     * 리뷰 작성 상태로 변경
+     *
+     */
+    public void changeReviewStatus() {
+        this.reviewWritten = true;
     }
 }

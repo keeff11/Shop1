@@ -35,6 +35,7 @@ public class SecurityConfig {
             "/orders/**",
             "/user/**",
             "/coupons/**",
+            "/reviews/**",
             "/error",
             "/favicon.ico"
     };

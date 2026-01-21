@@ -2,7 +2,11 @@ package com.kkh.shop_1.domain.item.entity;
 
 import com.kkh.shop_1.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "item")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "item")
 public class Item {
 
     @Id
@@ -33,30 +37,46 @@ public class Item {
     private int quantity;
 
     @Enumerated(EnumType.STRING)
-    private StockStatus stockStatus;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false)
+    @Column(nullable = false)
     private ItemCategory itemCategory;
 
-    @Column(length = 2000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String thumbnailUrl;
-
-    @OneToMany(
-            mappedBy = "item",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<ItemImage> images = new ArrayList<>();
-
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ItemStatus status;
+    private ItemStatus status; // SELLING, STOPPED
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private StockStatus stockStatus; // IN_STOCK, OUT_OF_STOCK
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
+
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemImage> images = new ArrayList<>();
+
+    private String thumbnailUrl;
+
+    // ★ [추가] 조회수, 리뷰수, 평점 통계 필드
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private int viewCount = 0;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private int reviewCount = 0;
+
+    @Column(nullable = false)
+    @ColumnDefault("0.0")
+    private double averageRating = 0.0;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private int salesCount = 0; // 판매량 (인기순 정렬용)
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -65,48 +85,28 @@ public class Item {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Item(String name, int price, int quantity, ItemCategory itemCategory,
-                String description, User seller, ItemStatus status, StockStatus stockStatus) {
+    public Item(String name, int price, int quantity, ItemCategory itemCategory, String description, User seller) {
         this.name = name;
         this.price = price;
         this.quantity = quantity;
         this.itemCategory = itemCategory;
         this.description = description;
         this.seller = seller;
-        this.status = status != null ? status : ItemStatus.SELLING;
-        this.stockStatus = stockStatus != null ? stockStatus :
-                (quantity > 0 ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK);
+        this.status = ItemStatus.SELLING;
+        this.stockStatus = (quantity > 0) ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK;
     }
 
-    // ======= 비즈니스 메서드 =======
+    // --- 비즈니스 로직 메서드 ---
 
-    /**
-     *
-     * 상품 수정
-     *
-     */
     public void update(String name, int price, int quantity, ItemCategory category, String description) {
         this.name = name;
         this.price = price;
-        this.updateStock(quantity); // 기존에 만드신 재고 로직 활용
+        this.quantity = quantity;
         this.itemCategory = category;
         this.description = description;
+        this.stockStatus = (quantity > 0) ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK;
     }
 
-    /**
-     *
-     * 이미지 리스트 초기화 (수정 시 기존 이미지 제거용)
-     *
-     */
-    public void clearImages() {
-        this.images.clear();
-    }
-
-    /**
-     *
-     * 이미지 추가
-     *
-     */
     public void addImage(ItemImage image) {
         this.images.add(image);
         if (image.getItem() != this) {
@@ -114,29 +114,42 @@ public class Item {
         }
     }
 
-    /**
-     *
-     * 대표 이미지(썸네일) 설정
-     *
-     */
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
+    public void clearImages() {
+        this.images.clear();
     }
 
-    /**
-     *
-     * 재고 수정 및 상태 자동 변경
-     *
-     */
-    public void updateStock(int quantity) {
-        this.quantity = quantity;
+    public void setThumbnailUrl(String url) {
+        this.thumbnailUrl = url;
+    }
+
+    public void updateStock(int newQuantity) {
+        this.quantity = newQuantity;
         if (this.quantity <= 0) {
             this.stockStatus = StockStatus.OUT_OF_STOCK;
-        } else if (this.quantity < 10) {
-            this.stockStatus = StockStatus.LIMITED;
-        } else {
-            this.stockStatus = StockStatus.IN_STOCK;
         }
     }
 
+    // ★ [추가] 조회수 증가
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    // ★ [추가] 리뷰 등록 시 평점/개수 갱신
+    public void addReviewRating(int newRating) {
+        double totalScore = this.averageRating * this.reviewCount;
+        this.reviewCount++;
+        this.averageRating = (totalScore + newRating) / this.reviewCount;
+    }
+
+    // ★ [추가] 리뷰 삭제 시 평점/개수 갱신
+    public void removeReviewRating(int oldRating) {
+        if (this.reviewCount <= 1) {
+            this.reviewCount = 0;
+            this.averageRating = 0.0;
+        } else {
+            double totalScore = this.averageRating * this.reviewCount;
+            this.reviewCount--;
+            this.averageRating = (totalScore - oldRating) / this.reviewCount;
+        }
+    }
 }

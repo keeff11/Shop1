@@ -1,9 +1,3 @@
-/**
- * * 통합 판매자 센터 접근 권한이 반영된 헤더 컴포넌트
- * 실무 가이드: 
- * 1. 개별 관리 기능(상품 등록, 쿠폰 발급)을 하나의 통합 대시보드(/seller)로 일원화함
- * 2. 권한(RBAC)에 따른 선별적 UI 노출로 사용자 경험(UX) 최적화
- * */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 /**
  * * 백엔드 UserInfoResponseDTO 구조와 일치하도록 인터페이스 정의
- * */
+ */
 interface UserInfo {
   nickname: string;
   email: string;
@@ -52,6 +46,7 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
 
+  // 유저 정보 조회
   const fetchUserData = useCallback(async () => {
     try {
       const data = await fetchApi<UserApiResponse>("/auth/me", {
@@ -65,6 +60,7 @@ export default function Header() {
     }
   }, []);
 
+  // 장바구니 수량 조회
   const fetchCartData = useCallback(async () => {
     try {
       const data = await fetchApi<CartApiResponse>("/cart/list", {
@@ -79,16 +75,30 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    // 1. 초기 로드
     fetchUserData();
     fetchCartData();
 
+    // 2. 이벤트 핸들러 정의
     const handleAuthChange = () => {
       fetchUserData();
       fetchCartData();
     };
 
+    // ★ [추가] 장바구니 업데이트 이벤트 수신 시 카운트 갱신
+    const handleCartUpdate = () => {
+      fetchCartData();
+    };
+
+    // 3. 이벤트 리스너 등록
     window.addEventListener("auth-change", handleAuthChange);
-    return () => window.removeEventListener("auth-change", handleAuthChange);
+    window.addEventListener("cart-updated", handleCartUpdate); // ★ 리스너 추가
+
+    // 4. 클린업
+    return () => {
+      window.removeEventListener("auth-change", handleAuthChange);
+      window.removeEventListener("cart-updated", handleCartUpdate); // ★ 리스너 제거
+    };
   }, [fetchUserData, fetchCartData]);
 
   const handleLogout = async () => {
@@ -101,6 +111,8 @@ export default function Header() {
       console.error("Logout failed:", err);
     } finally {
       setUser(null);
+      // 로그아웃 시 장바구니 카운트도 초기화
+      setCartCount(0);
       window.location.href = "/home"; 
     }
   };
@@ -137,7 +149,7 @@ export default function Header() {
                 </Button>
               </div>
 
-              {/* ✅ [수정] 통합 판매자 센터 버튼 (기존 등록, 쿠폰발급 버튼 대체) */}
+              {/* 통합 판매자 센터 버튼 */}
               {["ADMIN", "SELLER"].includes(user.userRole.toUpperCase()) && (
                 <Button 
                   variant="ghost" 
@@ -152,8 +164,9 @@ export default function Header() {
               {/* 장바구니 버튼 */}
               <Button variant="ghost" className="p-2.5 rounded-full hover:bg-gray-100 relative" onClick={() => router.push("/cart")}>
                 <img src="/cart.png" alt="장바구니" className="w-7 h-7" />
+                {/* 수량이 있을 때만 뱃지 표시 */}
                 {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-destructive text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                  <span className="absolute top-0 right-0 bg-destructive text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in duration-200">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}

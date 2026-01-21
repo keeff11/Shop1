@@ -22,11 +22,9 @@ public class OrderController {
     private final OrderService orderService;
 
     /**
-     *
-     * 상품 주문 생성
-     *
+     * [주문 생성]
      */
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<OrderResponseDTO>> order(
             @RequestBody OrderRequestDTO dto,
             @AuthenticationPrincipal Long userId
@@ -36,11 +34,23 @@ public class OrderController {
     }
 
     /**
-     *
-     * 주문 내역 단건 조회
-     *
+     * [결제 승인]
      */
-    @GetMapping("/{orderId}")
+    @GetMapping("/payment/approve")
+    public ResponseEntity<ApiResponse<OrderDetailDTO>> approveOrder(
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("pg_token") String pgToken,
+            @AuthenticationPrincipal Long userId
+    ) {
+        // 서비스 메서드 호출 시 인자 3개 전달
+        OrderDetailDTO response = orderService.approveOrder(orderId, pgToken, userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * [단건 상세 조회]
+     */
+    @GetMapping("/detail/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailDTO>> getOrder(
             @PathVariable Long orderId,
             @AuthenticationPrincipal Long userId
@@ -50,11 +60,9 @@ public class OrderController {
     }
 
     /**
-     *
-     * 내 주문 목록 전체 조회
-     *
+     * [목록 조회]
      */
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<ApiResponse<List<OrderDetailDTO>>> getOrders(@AuthenticationPrincipal Long userId) {
         List<OrderDetailDTO> orders = orderService.getOrders(userId);
         return ResponseEntity.ok(ApiResponse.success(orders));

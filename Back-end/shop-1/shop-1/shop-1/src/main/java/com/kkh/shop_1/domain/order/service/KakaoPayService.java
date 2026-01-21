@@ -1,9 +1,6 @@
 package com.kkh.shop_1.domain.order.service;
 
-import com.kkh.shop_1.domain.order.dto.PaymentApproveRequestDTO;
-import com.kkh.shop_1.domain.order.dto.PaymentApproveResponseDTO;
-import com.kkh.shop_1.domain.order.dto.PaymentReadyRequestDTO;
-import com.kkh.shop_1.domain.order.dto.PaymentReadyResponseDTO;
+import com.kkh.shop_1.domain.order.dto.*;
 import com.kkh.shop_1.domain.order.entity.PaymentType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -26,7 +24,7 @@ public class KakaoPayService implements PaymentService {
     @Value("${kakaopay.secret}")
     private String secretKey;
 
-    private final RestTemplate restTemplate; // Bean 주입 권장
+    private final RestTemplate restTemplate;
 
     private static final String READY_URL = "https://open-api.kakaopay.com/online/v1/payment/ready";
     private static final String APPROVE_URL = "https://open-api.kakaopay.com/online/v1/payment/approve";
@@ -36,50 +34,53 @@ public class KakaoPayService implements PaymentService {
         return PaymentType.KAKAO_PAY;
     }
 
-    /**
-     *
-     * 카카오페이 결제 준비 (Ready API)
-     *
-     */
     @Override
     public PaymentReadyResponseDTO ready(PaymentReadyRequestDTO req) {
         HttpHeaders headers = createHeaders();
-
         KakaoReadyRequest kakaoReq = KakaoReadyRequest.of(cid, req);
         HttpEntity<KakaoReadyRequest> entity = new HttpEntity<>(kakaoReq, headers);
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(READY_URL, entity, Map.class);
             Map<String, Object> body = response.getBody();
-
             if (body == null) throw new RuntimeException("카카오페이 응답이 비어있습니다.");
-
-            log.info("KakaoPay Ready Success: TID={}", body.get("tid"));
 
             return PaymentReadyResponseDTO.builder()
                     .tid((String) body.get("tid"))
                     .redirectUrl(extractRedirectUrl(body))
                     .build();
-
         } catch (Exception e) {
             log.error("KakaoPay Ready Failed: {}", e.getMessage());
             throw new RuntimeException("결제 준비 중 오류가 발생했습니다.", e);
         }
     }
 
-    /**
-     *
-     * 카카오페이 결제 승인 (Approve API)
-     *
-     */
     @Override
     public PaymentApproveResponseDTO approve(PaymentApproveRequestDTO req) {
-        // 실제 승인 로직 구현 시에도 위와 유사하게 KakaoApproveRequest 등을 만들어 호출
-        log.info("KakaoPay Approve logic called for TID: {}", req.getTid());
-        return PaymentApproveResponseDTO.builder().success(true).build();
-    }
+        HttpHeaders headers = createHeaders();
 
-    // --- Private Helper Methods ---
+        // [수정] 카카오 승인 API 파라미터 구성
+        Map<String, String> params = new HashMap<>();
+        params.put("cid", cid);
+        params.put("tid", req.getTid());
+        params.put("partner_order_id", req.getPartnerOrderId());
+        params.put("partner_user_id", req.getPartnerUserId());
+        params.put("pg_token", req.getPgToken());
+
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(APPROVE_URL, entity, Map.class);
+            Map<String, Object> body = response.getBody();
+            if (body == null) throw new RuntimeException("승인 응답이 비어있습니다.");
+
+            log.info("KakaoPay Approve Success: TID={}", body.get("tid"));
+            return PaymentApproveResponseDTO.builder().success(true).build();
+        } catch (Exception e) {
+            log.error("KakaoPay Approve Failed: {}", e.getMessage());
+            throw new RuntimeException("결제 승인 과정에서 오류가 발생했습니다.", e);
+        }
+    }
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -94,11 +95,6 @@ public class KakaoPayService implements PaymentService {
         return pcUrl != null ? pcUrl : mobileUrl;
     }
 
-    /**
-     *
-     * 카카오페이 API 전용 내부 요청 객체
-     *
-     */
     @Getter
     @RequiredArgsConstructor(staticName = "of")
     private static class KakaoReadyRequest {
@@ -114,17 +110,7 @@ public class KakaoPayService implements PaymentService {
         private final String fail_url;
 
         public static KakaoReadyRequest of(String cid, PaymentReadyRequestDTO req) {
-            return new KakaoReadyRequest(
-                    cid,
-                    req.getPartnerOrderId(),
-                    req.getPartnerUserId(),
-                    req.getItemName(),
-                    req.getQuantity(),
-                    req.getTotalAmount(),
-                    req.getApprovalUrl(),
-                    req.getCancelUrl(),
-                    req.getFailUrl()
-            );
+            return new KakaoReadyRequest(cid, req.getPartnerOrderId(), req.getPartnerUserId(), req.getItemName(), req.getQuantity(), req.getTotalAmount(), req.getApprovalUrl(), req.getCancelUrl(), req.getFailUrl());
         }
     }
 }
