@@ -69,10 +69,23 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://52.78.173.129:3000", "http://localhost:3000"));
+
+        // [핵심 수정] 프론트엔드 접속 주소들을 정확하게 명시 (IP, 도메인, 로컬 모두 포함)
+        config.setAllowedOrigins(List.of(
+                "http://52.78.173.129:3000",
+                "http://shop1.cloud",
+                "http://www.shop1.cloud",
+                "http://localhost:3000"
+        ));
+
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
+
+        // 브라우저에서 쿠키나 인증 헤더를 허용하기 위해 필수
         config.setAllowCredentials(true);
+
+        // 브라우저가 캐시할 pre-flight 요청 유효 시간 설정 (선택사항)
+        config.setMaxAge(3600L);
 
         source.registerCorsConfiguration("/**", config);
         return source;
