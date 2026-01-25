@@ -4,8 +4,8 @@ import com.kkh.shop_1.domain.item.entity.Item;
 import lombok.*;
 
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemSummaryDTO {
 

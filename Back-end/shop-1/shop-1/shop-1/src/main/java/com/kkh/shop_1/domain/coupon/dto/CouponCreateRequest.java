@@ -3,11 +3,15 @@ package com.kkh.shop_1.domain.coupon.dto;
 import com.kkh.shop_1.domain.coupon.entity.CouponType;
 import com.kkh.shop_1.domain.coupon.entity.DiscountType;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CouponCreateRequest {
 
     private String name;
@@ -22,5 +26,3 @@ public class CouponCreateRequest {
 
     private LocalDateTime expiredAt;
 }
-
-

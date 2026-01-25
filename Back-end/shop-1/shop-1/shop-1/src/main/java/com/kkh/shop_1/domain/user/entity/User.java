@@ -54,11 +54,12 @@ public class User {
     private List<Address> addresses = new ArrayList<>();
 
     /**
-     * * 내부 빌더용 생성자
+     * * 빌더용 생성자
      * */
-    @Builder(access = AccessLevel.PRIVATE)
-    private User(LoginType loginType, String socialId, String email, String password,
+    @Builder
+    private User(Long id, LoginType loginType, String socialId, String email, String password,
                  String profileImg, String nickname, UserRole userRole) {
+        this.id = id;
         this.loginType = loginType;
         this.socialId = socialId;
         this.email = email;
@@ -118,7 +119,7 @@ public class User {
      * */
     public void updateProfile(String nickname, String profileImg) {
         this.nickname = nickname;
-        if (profileImg != null) {
+        if (profileImg != null) { // 이미지가 null이 아닐 때만 업데이트
             this.profileImg = profileImg;
         }
     }

@@ -85,7 +85,8 @@ public class Item {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Item(String name, int price, int quantity, ItemCategory itemCategory, String description, User seller) {
+    public Item(Long id, String name, int price, int quantity, ItemCategory itemCategory, String description, User seller) {
+        this.id = id;
         this.name = name;
         this.price = price;
         this.quantity = quantity;

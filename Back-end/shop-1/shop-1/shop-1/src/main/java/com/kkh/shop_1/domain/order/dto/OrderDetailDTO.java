@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderDetailDTO {
 

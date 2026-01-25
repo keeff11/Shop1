@@ -116,7 +116,12 @@ public class CartItemService {
                 .map(cartItem -> {
                     Item item = itemMap.get(cartItem.getItemId());
                     return (item != null) ? new CartItemResponseDTO(
-                            item.getId(), item.getName(), item.getPrice(), cartItem.getQuantity()
+                            cartItem.getId(),
+                            item.getId(),
+                            item.getName(),
+                            item.getPrice(),
+                            cartItem.getQuantity(),
+                            item.getThumbnailUrl() // getImageUrl() -> getThumbnailUrl() 수정
                     ) : null;
                 })
                 .filter(Objects::nonNull)

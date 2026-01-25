@@ -43,12 +43,13 @@ public class Address {
 
     /**
      *
-     * 내부 빌더용 생성자 (AccessLevel.PRIVATE)
+     * 빌더용 생성자
      *
      */
-    @Builder(access = AccessLevel.PRIVATE)
-    private Address(User user, String zipCode, String roadAddress, String detailAddress,
+    @Builder
+    private Address(Long id, User user, String zipCode, String roadAddress, String detailAddress,
                     String recipientName, String recipientPhone, boolean isDefault) {
+        this.id = id;
         this.user = user;
         this.zipCode = zipCode;
         this.roadAddress = roadAddress;

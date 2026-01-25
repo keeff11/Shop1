@@ -9,8 +9,8 @@ import lombok.*;
  * * 사용자 상세 정보 응답 DTO
  * */
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserInfoResponseDTO {
 

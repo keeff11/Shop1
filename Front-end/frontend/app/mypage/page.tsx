@@ -4,11 +4,13 @@ import { fetchApi } from "@/lib/api";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// [수정 1] UserInfo 인터페이스에 loginType 추가
 interface UserInfo {
   nickname: string;
   email: string;
   userRole: string;
   profileImg?: string;
+  loginType: string; // "LOCAL", "KAKAO", "NAVER" 등
 }
 
 interface UserApiResponse {
@@ -43,7 +45,7 @@ export default function MyPage() {
         });
         setUser(data.data);
       } catch (err) {
-        console.error(err);
+        console.error("유저 정보 조회 실패:", err);
       } finally {
         setLoading(false);
       }
@@ -51,12 +53,12 @@ export default function MyPage() {
 
     const fetchAddresses = async () => {
       try {
-        const data = await fetchApi<AddressesApiResponse>("/address", {
+        const data = await fetchApi<AddressesApiResponse>("/user/addresses", {
           credentials: "include",
         });
         setAddresses(data.data);
       } catch (err) {
-        console.error(err);
+        console.error("배송지 조회 실패:", err);
       }
     };
 
@@ -81,12 +83,18 @@ export default function MyPage() {
               {user?.nickname}
             </h2>
             <p className="text-gray-500">{user?.email}</p>
-            <p className="mt-1 text-gray-600 font-medium">
-              역할: {user?.userRole.toUpperCase()}
-            </p>
+            <div className="mt-1 space-x-2">
+              <span className="text-gray-600 font-medium text-sm px-2 py-0.5 bg-gray-100 rounded">
+                {user?.userRole.toUpperCase()}
+              </span>
+              <span className="text-gray-600 font-medium text-sm px-2 py-0.5 bg-gray-100 rounded">
+                {user?.loginType}
+              </span>
+            </div>
+            
             <button
               className="mt-3 px-4 py-1 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
-              onClick={() => router.push("/user/my/edit")}
+              onClick={() => router.push("/mypage/edit")}
             >
               프로필 수정
             </button>
@@ -94,7 +102,6 @@ export default function MyPage() {
         </div>
 
         {/* ===== 마이페이지 주요 섹션 ===== */}
-        {/* 카드들을 항상 세로로 일렬 배치 */}
         <div className="space-y-6">
           {/* 주소 관리 */}
           <div className="bg-white shadow-md rounded-lg p-6">
@@ -117,7 +124,7 @@ export default function MyPage() {
                   </div>
                   <button
                     className="text-primary hover:underline"
-                    onClick={() => router.push(`/user/address/${addr.id}/edit`)}
+                    onClick={() => router.push(`/mypage/address/${addr.id}/edit`)}
                   >
                     수정
                   </button>
@@ -126,59 +133,62 @@ export default function MyPage() {
             )}
             <button
               className="mt-2 px-3 py-1 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
-              onClick={() => router.push("/user/address/create")}
+              onClick={() => router.push("/mypage/address/create")}
             >
               배송지 추가
             </button>
           </div>
 
-          {/* 비밀번호 변경 */}
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">
-              비밀번호 변경
-            </h3>
-            <form
-              className="space-y-3"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const currentPassword = (e.currentTarget.elements.namedItem("current") as HTMLInputElement).value;
-                const newPassword = (e.currentTarget.elements.namedItem("new") as HTMLInputElement).value;
+          {/* [수정 2] 비밀번호 변경 (LOCAL 로그인 유저에게만 표시) */}
+          {user?.loginType === "LOCAL" && (
+            <div className="bg-white shadow-md rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                비밀번호 변경
+              </h3>
+              <form
+                className="space-y-3"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const currentPassword = (e.currentTarget.elements.namedItem("current") as HTMLInputElement).value;
+                  const newPassword = (e.currentTarget.elements.namedItem("new") as HTMLInputElement).value;
 
-                try {
-                  const res = await fetchApi("/user/my/password", {
-                    method: "PATCH",
-                    credentials: "include",
-                    body: JSON.stringify({
-                      currentPassword,
-                      newPassword,
-                    }),
-                  });
-                  alert("비밀번호가 변경되었습니다.");
-                } catch (err) {
-                  console.error(err);
-                }
-              }}
-            >
-              <input
-                name="current"
-                type="password"
-                placeholder="현재 비밀번호"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <input
-                name="new"
-                type="password"
-                placeholder="새 비밀번호"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <button
-                type="submit"
-                className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition"
+                  try {
+                    await fetchApi("/user/password", {
+                      method: "PATCH",
+                      credentials: "include",
+                      body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                      }),
+                    });
+                    alert("비밀번호가 변경되었습니다.");
+                  } catch (err) {
+                    console.error(err);
+                    alert("비밀번호 변경에 실패했습니다.");
+                  }
+                }}
               >
-                변경
-              </button>
-            </form>
-          </div>
+                <input
+                  name="current"
+                  type="password"
+                  placeholder="현재 비밀번호"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <input
+                  name="new"
+                  type="password"
+                  placeholder="새 비밀번호"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition"
+                >
+                  변경
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* 최근 주문 */}
           <div className="bg-white shadow-md rounded-lg p-6">

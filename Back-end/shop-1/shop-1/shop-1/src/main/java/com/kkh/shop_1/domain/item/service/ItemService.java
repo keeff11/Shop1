@@ -56,7 +56,6 @@ public class ItemService {
      * 상품 수정
      */
     public Long updateItem(Long itemId, UpdateItemRequestDTO request, List<MultipartFile> newImages, Long sellerId) {
-
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
@@ -73,18 +72,13 @@ public class ItemService {
                 request.getDescription()
         );
 
-        // 이미지 업데이트 로직
         if (newImages != null && !newImages.isEmpty()) {
-            // 기존 이미지 삭제 (썸네일 + 상세 이미지)
             if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().equals(DEFAULT_IMAGE)) {
                 s3Service.deleteImageByUrl(item.getThumbnailUrl());
             }
             item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
 
-            // DB 관계 끊기
             item.clearImages();
-
-            // 새 이미지 업로드
             processItemImages(item, newImages);
         }
 
@@ -102,7 +96,6 @@ public class ItemService {
             throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
         }
 
-        // S3 이미지 삭제
         if (item.getThumbnailUrl() != null) {
             s3Service.deleteImageByUrl(item.getThumbnailUrl());
         }
@@ -113,16 +106,25 @@ public class ItemService {
 
     /**
      * 상품 상세 조회
-     * (조회수 증가 포함)
      */
     public ItemDetailDTO getItemDetail(Long itemId) {
+        // [핵심 수정] DB Atomic Update로 조회수 증가 (동시성 해결)
+        itemRepository.increaseViewCount(itemId);
+
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다. ID: " + itemId));
 
-        // ★ [추가] 조회수 증가 (Dirty Checking에 의해 트랜잭션 종료 시 DB 업데이트)
-        item.increaseViewCount();
-
         return ItemDetailDTO.from(item);
+    }
+
+    /**
+     * [핵심 수정] 재고 차감 (동시성 해결을 위해 OrderService에서 호출)
+     */
+    public void decreaseStock(Long itemId, int quantity) {
+        int updatedRows = itemRepository.decreaseStock(itemId, quantity);
+        if (updatedRows == 0) {
+            throw new IllegalStateException("재고가 부족합니다. ItemID: " + itemId);
+        }
     }
 
     // --- 조회용 (ReadOnly) ---
@@ -136,7 +138,8 @@ public class ItemService {
 
     @Transactional(readOnly = true)
     public List<ItemSummaryDTO> getAllItems() {
-        return itemRepository.findAll().stream()
+        // [핵심 수정] Fetch Join을 사용하여 N+1 문제 해결
+        return itemRepository.findAllWithImages().stream()
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
@@ -162,7 +165,6 @@ public class ItemService {
             return;
         }
 
-        // 폴더 경로: items/{itemId}
         String folderPath = "items/" + item.getId();
 
         for (int i = 0; i < images.size(); i++) {
@@ -175,7 +177,6 @@ public class ItemService {
                         .build();
                 item.addImage(itemImage);
 
-                // 첫 번째 이미지를 썸네일로 지정
                 if (i == 0) {
                     item.setThumbnailUrl(imageUrl);
                 }

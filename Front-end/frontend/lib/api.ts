@@ -1,4 +1,3 @@
-
 class ApiError extends Error {
   constructor(message: string) {
     super(message);
@@ -18,7 +17,8 @@ async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> 
   }
 
   const response = await fetch(url, {
-    ...options,
+    credentials: 'include', // [핵심 수정] 모든 요청 시 쿠키(토큰)를 자동으로 포함 전송
+    ...options,             // 외부에서 옵션을 덮어쓸 수 있도록 뒤에 배치
     headers,
   });
 

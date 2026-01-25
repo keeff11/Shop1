@@ -7,8 +7,8 @@ import lombok.*;
 import java.util.List;
 
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemDetailDTO {
 
@@ -16,6 +16,7 @@ public class ItemDetailDTO {
     private String name;
     private int price;
     private Integer discountPrice;
+    private int quantity; // quantity 필드 추가
     private String category;
     private String description;
     private String stockStatus;
@@ -36,6 +37,7 @@ public class ItemDetailDTO {
                 .name(item.getName())
                 .price(item.getPrice())
                 .discountPrice(item.getDiscountPrice())
+                .quantity(item.getQuantity()) // quantity 매핑 추가
                 .category(item.getItemCategory().name())
                 .description(item.getDescription())
                 .stockStatus(item.getStockStatus().name())

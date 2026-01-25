@@ -1,5 +1,6 @@
 package com.kkh.shop_1.domain.user.service;
 
+import com.kkh.shop_1.common.s3.S3Service;
 import com.kkh.shop_1.domain.user.dto.request.UserInfoUpdateRequestDTO;
 import com.kkh.shop_1.domain.user.dto.request.UserPasswordUpdateRequestDTO;
 import com.kkh.shop_1.domain.user.dto.response.UserInfoResponseDTO;
@@ -10,12 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-/**
- *
- * 사용자 기본 정보 관리 서비스
- *
- */
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,69 +22,63 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final S3Service s3Service; // [추가] S3 업로드 서비스 주입
 
-    /**
-     *
-     * ID로 사용자 엔티티 조회
-     *
-     */
     public User findById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
     }
 
-    /**
-     *
-     * 내 정보 상세 조회
-     *
-     */
     public UserInfoResponseDTO findUserInfo(Long userId) {
         User user = findById(userId);
         return UserInfoResponseDTO.from(user);
     }
 
     /**
-     *
-     * 프로필 정보(닉네임 등) 수정
-     *
+     * [수정] 프로필 수정 (이미지 파일 처리 추가)
      */
     @Transactional
-    public UserInfoUpdateResponseDTO updateUserProfile(Long userId, UserInfoUpdateRequestDTO dto) {
+    public UserInfoUpdateResponseDTO updateUserProfile(Long userId, UserInfoUpdateRequestDTO dto, MultipartFile profileImg) {
         User user = findById(userId);
 
-        user.updateProfile(dto.getNickname(), null); // profileImg 필드 추가 대응 가능
+        String profileImgUrl = user.getProfileImg(); // 기존 이미지 URL
+
+        // 1. 새 이미지가 업로드된 경우 S3 업로드
+        if (profileImg != null && !profileImg.isEmpty()) {
+            try {
+                // 기존 이미지가 있고 S3 URL이라면 삭제 로직 추가 가능 (선택사항)
+
+                // 새 이미지 업로드 (경로: users/{userId})
+                profileImgUrl = s3Service.uploadImage("users/" + userId, profileImg);
+            } catch (IOException e) {
+                throw new RuntimeException("프로필 이미지 업로드 실패", e);
+            }
+        }
+
+        // 2. 엔티티 업데이트 (닉네임, 이미지URL)
+        // User 엔티티에 updateProfile(String nickname, String profileImg) 메서드가 있어야 함
+        user.updateProfile(dto.getNickname(), profileImgUrl);
 
         return UserInfoUpdateResponseDTO.from(user);
     }
 
-    /**
-     *
-     * 비밀번호 변경 (로컬 로그인 사용자 전용)
-     *
-     */
+    // [유지] 기존 메서드 (호환성 위해 남겨둘 경우)
+    @Transactional
+    public UserInfoUpdateResponseDTO updateUserProfile(Long userId, UserInfoUpdateRequestDTO dto) {
+        return updateUserProfile(userId, dto, null);
+    }
+
     @Transactional
     public void updateUserPassword(Long userId, UserPasswordUpdateRequestDTO dto) {
         User user = findById(userId);
-
         validatePassword(dto.getCurrentPassword(), user.getPassword());
-
         String encodedPassword = passwordEncoder.encode(dto.getNewPassword());
         user.changePassword(encodedPassword);
     }
 
-    // --- Private Helper Methods ---
-
-    /**
-     *
-     * 비밀번호 일치 여부 검증
-     *
-     */
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
     }
-
-
-
 }

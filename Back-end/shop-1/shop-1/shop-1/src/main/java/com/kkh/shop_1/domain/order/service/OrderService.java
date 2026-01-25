@@ -33,23 +33,22 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final AddressService addressService;
     private final PaymentServiceFactory paymentServiceFactory;
-
     private final CartItemService cartItemService;
 
     /**
-     * 신규 주문을 생성하고 PG사 결제 준비 단계를 진행
+     * 신규 주문 생성 및 PG사 결제 준비
      */
     public OrderResponseDTO orderItems(Long userId, OrderRequestDTO dto) {
         User user = userService.findById(userId);
         Address address = getOrCreateAddress(user, dto);
 
-        // 1. 주문 생성
+        // 1. 주문 생성 (이 과정에서 재고 차감 수행)
         Order order = createOrder(user, address, dto.getItemOrders());
-        // 결제 타입 저장 (승인 시 Kakao인지 Naver인지 구분하기 위함)
         order.setPaymentType(dto.getPaymentType());
         orderRepository.save(order);
 
         // 2. 결제 준비 요청 (PG사 통신)
+        // 참고: 트랜잭션 내외부 분리는 구조 변경이 크므로 유지하되, DB 락 시간을 최소화하는 방향으로 개선
         PaymentReadyResponseDTO paymentResponse = preparePayment(user, order, dto);
 
         // 3. TID 업데이트
@@ -81,30 +80,25 @@ public class OrderService {
         // 3. 주문 상태 변경 (PAID)
         order.completePayment(order.getTid());
 
-        // ★ [핵심 수정] 상태 변경 사항을 DB에 즉시 반영 (Flush)
-        // 이후 장바구니 삭제 로직에서 영속성 컨텍스트가 초기화되더라도, 이미 DB에는 반영되었으므로 안전함.
+        // [핵심 수정] 상태 변경 사항 즉시 반영 (Flush)
         orderRepository.saveAndFlush(order);
 
-        // 4. DTO 변환 (영속성 컨텍스트가 살아있을 때 수행)
+        // 4. DTO 변환
         OrderDetailDTO responseDTO = OrderDetailDTO.from(order);
 
-        // ==========================================
-        // 장바구니 비우기 로직 (Bulk Delete)
-        // ==========================================
+        // 5. 장바구니 비우기 (오류 발생 시 로그만 남기고 주문 로직은 정상 완료)
         try {
             List<Long> orderedItemIds = order.getOrderItems().stream()
                     .map(orderItem -> orderItem.getItem().getId())
                     .toList();
 
             if (!orderedItemIds.isEmpty()) {
-                // @Modifying(clearAutomatically = true) 때문에 여기서 영속성 컨텍스트가 비워짐
                 cartItemService.deleteCartItemsByUserIdAndItemIds(userId, orderedItemIds);
                 log.info("장바구니 상품 삭제 완료 - UserID: {}, ItemIDs: {}", userId, orderedItemIds);
             }
         } catch (Exception e) {
-            log.error("장바구니 삭제 중 오류 발생: {}", e.getMessage());
+            log.error("장바구니 삭제 중 오류 발생 (주문은 성공): {}", e.getMessage());
         }
-        // ==========================================
 
         log.info("주문 결제 승인 완료 - 주문ID: {}, TID: {}", orderId, order.getTid());
 
@@ -125,7 +119,8 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderDetailDTO> getOrders(Long userId) {
         User user = userService.findById(userId);
-        return orderRepository.findByUser(user).stream()
+        // [핵심 수정] N+1 문제 해결을 위한 Repository 메서드 호출
+        return orderRepository.findByUserWithFetch(user).stream()
                 .map(OrderDetailDTO::from)
                 .toList();
     }
@@ -152,10 +147,13 @@ public class OrderService {
         Order order = Order.create(user, address);
 
         for (OrderRequestDTO.ItemOrder io : itemOrders) {
+            // [핵심 수정] 1. 동시성 제어를 위해 ItemService를 통해 DB Atomic Update 수행
+            itemService.decreaseStock(io.getItemId(), io.getQuantity());
+
+            // 2. 주문 생성을 위해 엔티티 조회 (재고는 이미 차감됨)
             Item item = itemService.findById(io.getItemId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 없음 ID: " + io.getItemId()));
 
-            item.updateStock(item.getQuantity() - io.getQuantity());
             OrderItem orderItem = OrderItem.create(item, io.getQuantity());
 
             if (io.getCouponId() != null) {
@@ -169,9 +167,7 @@ public class OrderService {
 
     private PaymentReadyResponseDTO preparePayment(User user, Order order, OrderRequestDTO dto) {
         PaymentService paymentService = paymentServiceFactory.getService(dto.getPaymentType());
-
         String approvalUrl = dto.getApprovalUrl().replace("{orderId}", order.getId().toString());
-
         return paymentService.ready(PaymentReadyRequestDTO.of(user, order, dto, approvalUrl));
     }
 
