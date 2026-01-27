@@ -1,10 +1,7 @@
 package com.kkh.shop_1.domain.item.service;
 
 import com.kkh.shop_1.common.s3.S3Service;
-import com.kkh.shop_1.domain.item.dto.CreateItemRequestDTO;
-import com.kkh.shop_1.domain.item.dto.ItemDetailDTO;
-import com.kkh.shop_1.domain.item.dto.ItemSummaryDTO;
-import com.kkh.shop_1.domain.item.dto.UpdateItemRequestDTO;
+import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
 import com.kkh.shop_1.domain.item.entity.ItemImage;
@@ -213,5 +210,12 @@ public class ItemService {
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new IllegalArgumentException("존재하지 않는 카테고리입니다: " + categoryName);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemSummaryDTO> searchItems(ItemSearchCondition condition) {
+        return itemRepository.search(condition).stream()
+                .map(ItemSummaryDTO::from)
+                .toList();
     }
 }

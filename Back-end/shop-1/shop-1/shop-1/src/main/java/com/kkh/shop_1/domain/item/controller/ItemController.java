@@ -1,10 +1,7 @@
 package com.kkh.shop_1.domain.item.controller;
 
 import com.kkh.shop_1.common.ApiResponse;
-import com.kkh.shop_1.domain.item.dto.CreateItemRequestDTO;
-import com.kkh.shop_1.domain.item.dto.ItemDetailDTO;
-import com.kkh.shop_1.domain.item.dto.ItemSummaryDTO;
-import com.kkh.shop_1.domain.item.dto.UpdateItemRequestDTO;
+import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -98,8 +95,10 @@ public class ItemController {
      *
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getAllItems() {
-        List<ItemSummaryDTO> items = itemService.getAllItems();
+    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getItems(
+            @ModelAttribute ItemSearchCondition condition
+    ) {
+        List<ItemSummaryDTO> items = itemService.searchItems(condition);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 

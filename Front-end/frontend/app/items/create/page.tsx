@@ -3,7 +3,7 @@
 import { fetchApi } from "@/lib/api";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast"; // ★ 토스트 임포트
+import { toast } from "react-hot-toast";
 
 interface CreateItemResponse {
   data: string;
@@ -20,8 +20,8 @@ export default function CreateItemPage() {
   
   // 입력 상태
   const [name, setName] = useState("");
-  const [price, setPrice] = useState<number | "">("");
-  const [quantity, setQuantity] = useState<number | "">("");
+  const [price, setPrice] = useState("");     // 문자열 (쉼표 포함)
+  const [quantity, setQuantity] = useState(""); // [수정] 문자열 (쉼표 포함)
   const [category, setCategory] = useState("ELECTRONICS");
   const [description, setDescription] = useState("");
   
@@ -30,8 +30,24 @@ export default function CreateItemPage() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 로딩 상태 추가 (중복 클릭 방지)
+  // 로딩 상태
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 가격 입력 핸들러 (자동 쉼표)
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, "");
+    if (rawValue === "") { setPrice(""); return; }
+    if (isNaN(Number(rawValue))) return;
+    setPrice(Number(rawValue).toLocaleString());
+  };
+
+  // [추가] 재고 수량 입력 핸들러 (자동 쉼표)
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, "");
+    if (rawValue === "") { setQuantity(""); return; }
+    if (isNaN(Number(rawValue))) return;
+    setQuantity(Number(rawValue).toLocaleString());
+  };
 
   // 이미지 파일 선택 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,23 +76,29 @@ export default function CreateItemPage() {
     e.preventDefault();
 
     if (!name || !price || !quantity) {
-      toast.error("필수 정보를 모두 입력해주세요."); // ★ 알림 교체
+      toast.error("필수 정보를 모두 입력해주세요.");
       return;
     }
 
     setIsSubmitting(true);
-    const loadingToast = toast.loading("상품 정보를 등록하고 있습니다..."); // ★ 로딩 토스트 시작
+    const loadingToast = toast.loading("상품 정보를 등록하고 있습니다...");
 
     const formData = new FormData();
-    const itemData = { name, price: Number(price), quantity: Number(quantity), category, description };
     
-    // JSON 데이터 추가
+    // [수정] 가격과 수량 모두 쉼표 제거 후 숫자로 변환하여 전송
+    const itemData = { 
+      name, 
+      price: Number(price.replace(/,/g, "")), 
+      quantity: Number(quantity.replace(/,/g, "")), 
+      category, 
+      description 
+    };
+    
     formData.append(
       "request",
       new Blob([JSON.stringify(itemData)], { type: "application/json" })
     );
 
-    // 이미지 파일 추가
     selectedFiles.forEach((file) => {
       formData.append("images", file);
     });
@@ -89,15 +111,15 @@ export default function CreateItemPage() {
       });
       
       if ('data' in data) {
-        toast.success("상품이 성공적으로 등록되었습니다! ✨", { id: loadingToast }); // ★ 성공 알림
+        toast.success("상품이 성공적으로 등록되었습니다! ✨", { id: loadingToast });
         router.push(`/items/${data.data}`);
       } else {
-        toast.error(data.message || "상품 등록에 실패했습니다.", { id: loadingToast }); // ★ 실패 알림
+        toast.error(data.message || "상품 등록에 실패했습니다.", { id: loadingToast });
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error(error);
-      toast.error("서버 통신 중 오류가 발생했습니다.", { id: loadingToast }); // ★ 에러 알림
+      toast.error("서버 통신 중 오류가 발생했습니다.", { id: loadingToast });
       setIsSubmitting(false);
     }
   };
@@ -132,9 +154,9 @@ export default function CreateItemPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">가격 (원)</label>
                   <input
-                    type="number"
+                    type="text"
                     value={price}
-                    onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={handlePriceChange}
                     placeholder="0"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black outline-none transition"
                     disabled={isSubmitting}
@@ -142,10 +164,11 @@ export default function CreateItemPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">재고 수량</label>
+                  {/* [수정] type="text"로 변경 및 onChange 교체 */}
                   <input
-                    type="number"
+                    type="text"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={handleQuantityChange}
                     placeholder="1"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black outline-none transition"
                     disabled={isSubmitting}
