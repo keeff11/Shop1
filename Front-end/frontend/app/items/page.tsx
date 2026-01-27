@@ -1,9 +1,8 @@
 "use client";
 
 import { fetchApi } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react"; // Suspense 추가
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react"; // 아이콘 (선택사항)
 
 const DEFAULT_IMAGE = "/no_image.jpg";
 
@@ -11,8 +10,8 @@ interface Item {
   id: number;
   name: string;
   price: number;
-  thumbnailUrl?: string; 
-  images?: { imageUrl: string }[]; 
+  thumbnailUrl?: string;
+  images?: { imageUrl: string }[];
 }
 
 interface ApiResponse {
@@ -20,9 +19,10 @@ interface ApiResponse {
   data: Item[];
 }
 
-export default function ItemsPage() {
+// 1. 실제 로직이 들어있는 컴포넌트 (기존 ItemsPage 내용)
+function ItemsContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // URL 쿼리스트링 읽기 (선택사항)
+  const searchParams = useSearchParams(); 
 
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +35,7 @@ export default function ItemsPage() {
   // 검색 함수
   const fetchItems = () => {
     setLoading(true);
-    
-    // 쿼리 파라미터 생성
+
     const params = new URLSearchParams();
     if (keyword) params.append("keyword", keyword);
     if (category) params.append("category", category);
@@ -50,10 +49,9 @@ export default function ItemsPage() {
       .finally(() => setLoading(false));
   };
 
-  // 조건 변경 시 자동 검색 (또는 검색 버튼 눌렀을 때만 하려면 useEffect 의존성 조정)
   useEffect(() => {
     fetchItems();
-  }, [category, sort]); // 키워드는 엔터 칠 때 검색하도록 제외
+  }, [category, sort]); 
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,9 +66,7 @@ export default function ItemsPage() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-2xl font-bold text-gray-800">상품 둘러보기</h1>
 
-          {/* 검색 및 필터 컨트롤 */}
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            
             {/* 카테고리 필터 */}
             <select
               value={category}
@@ -164,5 +160,19 @@ export default function ItemsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// 2. Suspense로 감싸는 메인 페이지 컴포넌트
+export default function ItemsPage() {
+  return (
+    // useSearchParams를 사용하는 컴포넌트 경계에 Suspense를 적용합니다.
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <ItemsContent />
+    </Suspense>
   );
 }
