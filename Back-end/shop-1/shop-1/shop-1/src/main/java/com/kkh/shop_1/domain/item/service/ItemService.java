@@ -8,9 +8,13 @@ import com.kkh.shop_1.domain.item.entity.ItemImage;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,9 @@ public class ItemService {
     private final S3Service s3Service;
 
     private static final String DEFAULT_IMAGE = "/no_image.jpg";
+
+    @PersistenceContext
+    private EntityManager entityManager; // [추가] 직접 영속성 관리
 
     /**
      * 상품 등록
@@ -83,22 +90,28 @@ public class ItemService {
     }
 
     /**
-     * 상품 삭제
+     * [수정] 상품 삭제 (동시성/영속성 이슈 해결)
      */
     public void deleteItem(Long itemId, Long currentUserId) {
+        // 1. 엔티티 조회
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
 
+        // 2. 권한 확인
         if (!item.getSeller().getId().equals(currentUserId)) {
             throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
         }
 
+        // 3. 이미지 삭제 (S3) - 트랜잭션 롤백 안 되므로 주의 (보통은 이벤트를 씀)
         if (item.getThumbnailUrl() != null) {
             s3Service.deleteImageByUrl(item.getThumbnailUrl());
         }
         item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
 
-        itemRepository.delete(item);
+        // 4. [핵심] 영속성 컨텍스트 초기화 후 삭제 (삭제 충돌 방지)
+        itemRepository.deleteById(itemId); // delete(item) 대신 deleteById 사용 권장
+        entityManager.flush(); // 즉시 DB 반영
+        entityManager.clear(); // 영속성 컨텍스트 비우기
     }
 
     /**
@@ -212,10 +225,12 @@ public class ItemService {
         }
     }
 
+    // [수정] 검색 결과 페이징 처리
     @Transactional(readOnly = true)
-    public List<ItemSummaryDTO> searchItems(ItemSearchCondition condition) {
-        return itemRepository.search(condition).stream()
-                .map(ItemSummaryDTO::from)
-                .toList();
+    public Page<ItemSummaryDTO> searchItems(ItemSearchCondition condition, Pageable pageable) {
+        return itemRepository.search(condition, pageable)
+                .map(ItemSummaryDTO::from);
     }
+
+
 }

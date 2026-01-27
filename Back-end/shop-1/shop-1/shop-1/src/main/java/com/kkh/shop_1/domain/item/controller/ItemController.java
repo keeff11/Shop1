@@ -4,6 +4,9 @@ import com.kkh.shop_1.common.ApiResponse;
 import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.service.ItemService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -56,12 +59,12 @@ public class ItemController {
      *
      */
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<ApiResponse<Void>> deleteItem(
+    public ResponseEntity<ApiResponse<String>> deleteItem(
             @PathVariable Long itemId,
-            @AuthenticationPrincipal Long sellerId) { // 시큐리티에서 유저 정보 주입
-
-        itemService.deleteItem(itemId, sellerId);
-        return ResponseEntity.ok(ApiResponse.successNoData());
+            @AuthenticationPrincipal Long userId // 로그인된 사용자 ID 주입
+    ) {
+        itemService.deleteItem(itemId, userId);
+        return ResponseEntity.ok(ApiResponse.success("상품이 성공적으로 삭제되었습니다."));
     }
 
     /**
@@ -95,10 +98,11 @@ public class ItemController {
      *
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getItems(
-            @ModelAttribute ItemSearchCondition condition
+    public ResponseEntity<ApiResponse<Page<ItemSummaryDTO>>> getItems(
+            @ModelAttribute ItemSearchCondition condition,
+            @PageableDefault(size = 12) Pageable pageable
     ) {
-        List<ItemSummaryDTO> items = itemService.searchItems(condition);
+        Page<ItemSummaryDTO> items = itemService.searchItems(condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 

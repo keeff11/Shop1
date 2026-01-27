@@ -3,11 +3,10 @@
 import { fetchApi } from "@/lib/api";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "react-hot-toast"; // ★ 토스트 임포트 확인
+import { toast } from "react-hot-toast";
 
 const DEFAULT_IMAGE = "/no_image.jpg"; 
 
-// 카테고리 한글 매핑
 const categoryMap: Record<string, string> = {
   ELECTRONICS: "전자기기",
   CLOTHING: "의류",
@@ -17,7 +16,6 @@ const categoryMap: Record<string, string> = {
   OTHERS: "기타",
 };
 
-// 아이콘 컴포넌트
 const StarIcon = ({ filled, className }: { filled?: boolean; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -43,6 +41,7 @@ interface Item {
   thumbnailUrl?: string; 
   images: string[]; 
   status: string;
+  sellerId: number;        // [중요] 백엔드 DTO에 이 필드가 있어야 함
   sellerNickname?: string;
   createdAt: string;
   updatedAt: string;
@@ -72,10 +71,18 @@ interface PageResponse<T> {
   last: boolean;
 }
 
+interface UserInfo {
+  userId: number;
+  email: string;
+  nickname: string;
+}
+
 export default function ItemDetailPage() {
   const router = useRouter();
   const params = useParams();
+  
   const [item, setItem] = useState<Item | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"detail" | "reviews">("detail");
@@ -87,10 +94,13 @@ export default function ItemDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // 1. 상품 정보 조회
         const itemRes = await fetchApi<ApiResponse<Item>>(`/items/${params.itemId}`);
         const itemData = itemRes.data;
         setItem(itemData);
 
+        // 이미지 초기값 설정
         if (itemData.thumbnailUrl) {
             setSelectedImage(itemData.thumbnailUrl);
         } else if (itemData.images && itemData.images.length > 0) {
@@ -99,6 +109,7 @@ export default function ItemDetailPage() {
             setSelectedImage(DEFAULT_IMAGE);
         }
 
+        // 2. 리뷰 정보 조회
         try {
           const reviewRes = await fetchApi<ApiResponse<PageResponse<Review>>>(`/reviews/items/${params.itemId}`);
           if (reviewRes.data && Array.isArray(reviewRes.data.content)) {
@@ -106,13 +117,24 @@ export default function ItemDetailPage() {
           } else {
             setReviews([]);
           }
-        } catch (reviewErr) {
-          console.error("리뷰 로드 실패:", reviewErr);
+        } catch (error) {
           setReviews([]);
         }
 
+        // 3. 현재 로그인한 유저 정보 조회
+        try {
+          const userRes = await fetchApi<ApiResponse<UserInfo>>("/user/my", {
+            credentials: "include" // 쿠키 전송
+          });
+          if (userRes.data) {
+            setCurrentUserId(userRes.data.userId);
+          }
+        } catch (error) {
+          console.log("로그인되어 있지 않음");
+        }
+
       } catch (err) {
-        console.error("상품 로드 실패:", err);
+        console.error("데이터 로드 실패:", err);
         setItem(null);
       } finally {
         setLoading(false);
@@ -121,6 +143,17 @@ export default function ItemDetailPage() {
 
     fetchData();
   }, [params.itemId]);
+
+  // [디버깅용 로그] - F12 콘솔에서 확인 가능
+  useEffect(() => {
+    if (item) {
+      console.log("=== 권한 디버깅 ===");
+      console.log("상품 ID:", item.id);
+      console.log("상품 판매자 ID (item.sellerId):", item.sellerId); // 여기가 undefined면 백엔드 문제
+      console.log("내 로그인 ID (currentUserId):", currentUserId);
+      console.log("일치 여부:", Number(item.sellerId) === Number(currentUserId));
+    }
+  }, [item, currentUserId]);
 
   const moveToReviews = () => {
     setActiveTab("reviews");
@@ -135,27 +168,18 @@ export default function ItemDetailPage() {
     }, 100);
   };
 
-  /** 장바구니 추가 로직 수정 */
   const handleAddToCart = async () => {
     if (!item) return;
-    
-    // 1. 즉시 로딩 토스트 시작
     const toastId = toast.loading("장바구니에 담는 중...");
-
     try {
       await fetchApi("/cart/add", {
         method: "POST",
         credentials: "include",
         body: JSON.stringify({ itemId: item.id, quantity: 1 }),
       });
-
-      // 2. 성공 시 기존 토스트 업데이트
       toast.success("장바구니에 추가되었습니다! 🛒", { id: toastId });
-      
-      // 장바구니 숫자 갱신을 위한 커스텀 이벤트
       window.dispatchEvent(new Event("cart-updated"));
     } catch (err) {
-      // 3. 실패 시 에러 메시지로 업데이트
       console.error(err);
       toast.error("장바구니 추가에 실패했습니다.", { id: toastId });
     }
@@ -167,7 +191,6 @@ export default function ItemDetailPage() {
       return;
     }
     const finalPrice = item.discountPrice ? item.discountPrice : item.price;
-
     const checkoutData = {
       type: "SINGLE",
       itemOrders: [{ 
@@ -177,16 +200,33 @@ export default function ItemDetailPage() {
         price: finalPrice,
         imageUrl: selectedImage || DEFAULT_IMAGE
       }],
-      addressId: null, 
-      zipCode: "",
-      roadAddress: "",
-      detailAddress: "",
-      recipientName: "",
-      recipientPhone: "",
+      addressId: null, zipCode: "", roadAddress: "", detailAddress: "", recipientName: "", recipientPhone: "",
     };
-
     sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData));
     router.push("/payments");
+  };
+
+  const handleDeleteItem = async () => {
+    if (!item) return;
+    
+    if (!confirm("정말로 이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.")) {
+      return;
+    }
+
+    const toastId = toast.loading("상품을 삭제하고 있습니다...");
+
+    try {
+      await fetchApi(`/items/${item.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      toast.success("상품이 삭제되었습니다.", { id: toastId });
+      router.replace("/items"); 
+    } catch (err) {
+      console.error(err);
+      toast.error("상품 삭제에 실패했습니다. 권한을 확인해주세요.", { id: toastId });
+    }
   };
 
   if (loading) return (
@@ -205,14 +245,15 @@ export default function ItemDetailPage() {
   const reviewCount = item.reviewCount || 0;
   const viewCount = item.viewCount || 0;
 
+  // [핵심] 본인 확인 로직 (숫자 변환 비교로 안전하게)
+  const isOwner = currentUserId && item.sellerId && (Number(currentUserId) === Number(item.sellerId));
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        
-        {/* === 상단 섹션 === */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
           
-          {/* [Left] 이미지 */}
+          {/* 이미지 섹션 */}
           <div className="space-y-4">
             <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden shadow-sm relative group border border-gray-100">
               <img
@@ -241,7 +282,7 @@ export default function ItemDetailPage() {
             )}
           </div>
 
-          {/* [Right] 정보 */}
+          {/* 정보 섹션 */}
           <div className="flex flex-col pt-2">
             <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
               <div className="flex items-center gap-2">
@@ -257,9 +298,21 @@ export default function ItemDetailPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight mb-4">
-              {item.name}
-            </h1>
+            <div className="flex justify-between items-start gap-4">
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+                {item.name}
+              </h1>
+              
+              {/* 삭제 버튼 (조건부 렌더링) */}
+              {isOwner && (
+                <button 
+                  onClick={handleDeleteItem}
+                  className="shrink-0 px-3 py-1.5 text-xs font-bold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                >
+                  상품 삭제
+                </button>
+              )}
+            </div>
 
             <div className="flex items-center gap-2 mb-8 cursor-pointer hover:opacity-70 transition-opacity" onClick={moveToReviews}>
               <div className="flex text-yellow-400">
@@ -306,7 +359,7 @@ export default function ItemDetailPage() {
           </div>
         </div>
 
-        {/* === 하단 섹션 === */}
+        {/* 하단 탭 (상세/리뷰) */}
         <div id="detail-section"> 
           <div className="flex border-b border-gray-200 mb-10 sticky top-[72px] bg-white z-10">
             <button
@@ -336,23 +389,6 @@ export default function ItemDetailPage() {
 
             {activeTab === "reviews" && (
               <div className="animate-in fade-in duration-300">
-                <div className="bg-gray-50 rounded-2xl p-8 mb-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 border border-gray-100">
-                  <div className="text-center">
-                    <div className="text-5xl font-black text-gray-900 mb-2">{rating.toFixed(1)}</div>
-                    <div className="flex justify-center text-yellow-400 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon key={i} filled={i < Math.round(rating)} className="w-6 h-6" />
-                      ))}
-                    </div>
-                    <div className="text-gray-500 font-medium">총 {reviewCount}개의 리뷰</div>
-                  </div>
-                  <div className="w-px h-24 bg-gray-200 hidden md:block"></div>
-                  <div className="text-center md:text-left">
-                    <p className="font-bold text-gray-800 text-lg mb-2">구매자들의 생생한 후기</p>
-                    <p className="text-gray-500">실제 구매 고객님들이 작성해주신 소중한 리뷰입니다.</p>
-                  </div>
-                </div>
-
                 {reviews.length > 0 ? (
                   <div className="space-y-6">
                     {reviews.map((review) => (
@@ -366,8 +402,6 @@ export default function ItemDetailPage() {
                               <p className="font-bold text-gray-900">{review.nickname}</p>
                               <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                 <span>{new Date(review.createdAt).toLocaleDateString()}</span>
-                                <span>·</span>
-                                <span>구매확정</span>
                               </div>
                             </div>
                           </div>
@@ -377,30 +411,19 @@ export default function ItemDetailPage() {
                             ))}
                           </div>
                         </div>
-                        <p className="text-gray-700 leading-relaxed pl-[52px] whitespace-pre-line">
-                          {review.content}
-                        </p>
-                        {review.imageUrls && review.imageUrls.length > 0 && (
-                          <div className="flex gap-2 mt-4 pl-[52px]">
-                            {review.imageUrls.map((imgUrl, idx) => (
-                              <img key={idx} src={imgUrl} alt="Review" className="w-20 h-20 object-cover rounded-lg border border-gray-100" />
-                            ))}
-                          </div>
-                        )}
+                        <p className="text-gray-700 pl-[52px]">{review.content}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-20 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-lg font-medium text-gray-600">아직 작성된 리뷰가 없습니다.</p>
-                    <p className="text-sm mt-2">첫 번째 리뷰의 주인공이 되어보세요!</p>
+                    <p className="text-lg">작성된 리뷰가 없습니다.</p>
                   </div>
                 )}
               </div>
             )}
           </div>
         </div>
-
       </main>
     </div>
   );

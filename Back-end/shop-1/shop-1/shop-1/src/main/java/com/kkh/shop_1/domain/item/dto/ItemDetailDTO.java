@@ -16,20 +16,20 @@ public class ItemDetailDTO {
     private String name;
     private int price;
     private Integer discountPrice;
-    private int quantity; // quantity 필드 추가
+    private int quantity;
     private String category;
     private String description;
     private String stockStatus;
     private String status;
-    private String sellerNickname;
-    private String thumbnailUrl; // 썸네일도 상세에 필요할 수 있음
-    private List<String> images;
+    private Long sellerId;
 
-    // ★ [추가] 프론트엔드 요구 필드
+    private String sellerNickname;
+    private String thumbnailUrl;
+    private List<String> images;
     private double averageRating;
     private int reviewCount;
     private int viewCount;
-    private String createdAt; // 날짜 포맷팅 필요 시 String 변환 추천
+    private String createdAt;
 
     public static ItemDetailDTO from(Item item) {
         return ItemDetailDTO.builder()
@@ -37,21 +37,24 @@ public class ItemDetailDTO {
                 .name(item.getName())
                 .price(item.getPrice())
                 .discountPrice(item.getDiscountPrice())
-                .quantity(item.getQuantity()) // quantity 매핑 추가
+                .quantity(item.getQuantity())
                 .category(item.getItemCategory().name())
                 .description(item.getDescription())
                 .stockStatus(item.getStockStatus().name())
                 .status(item.getStatus().name())
+
+                // [중요] 여기서 sellerId를 반드시 매핑해야 합니다.
+                .sellerId(item.getSeller().getId())
+
                 .sellerNickname(item.getSeller().getNickname())
                 .thumbnailUrl(item.getThumbnailUrl())
                 .images(item.getImages().stream()
                         .map(ItemImage::getImageUrl)
                         .toList())
-                // ★ [추가] 필드 매핑
                 .averageRating(item.getAverageRating())
                 .reviewCount(item.getReviewCount())
                 .viewCount(item.getViewCount())
-                .createdAt(item.getCreatedAt().toString()) // ISO 8601 형식
+                .createdAt(item.getCreatedAt().toString())
                 .build();
     }
 }

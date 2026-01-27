@@ -14,6 +14,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserInfoResponseDTO {
 
+    private Long userId;
     private LoginType loginType;
     private String email;
     private String profileImg;
@@ -25,6 +26,7 @@ public class UserInfoResponseDTO {
      * */
     public static UserInfoResponseDTO from(User user) {
         return UserInfoResponseDTO.builder()
+                .userId(user.getId())
                 .loginType(user.getLoginType())
                 .email(user.getEmail())
                 .profileImg(user.getProfileImg())
