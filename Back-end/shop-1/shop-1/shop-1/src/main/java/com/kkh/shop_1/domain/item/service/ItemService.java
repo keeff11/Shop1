@@ -90,28 +90,31 @@ public class ItemService {
     }
 
     /**
-     * [수정] 상품 삭제 (동시성/영속성 이슈 해결)
+     * 상품 삭제 (배포 서버 동시성 에러 해결 버전)
      */
     public void deleteItem(Long itemId, Long currentUserId) {
-        // 1. 엔티티 조회
+        // 1. 권한 확인을 위해 먼저 조회 (필요한 최소 정보만)
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
 
-        // 2. 권한 확인
         if (!item.getSeller().getId().equals(currentUserId)) {
             throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
         }
 
-        // 3. 이미지 삭제 (S3) - 트랜잭션 롤백 안 되므로 주의 (보통은 이벤트를 씀)
-        if (item.getThumbnailUrl() != null) {
+        // 2. S3 이미지 삭제 (트랜잭션과 무관하게 실행되므로 삭제 전 수행)
+        if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().equals(DEFAULT_IMAGE)) {
             s3Service.deleteImageByUrl(item.getThumbnailUrl());
         }
         item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
 
-        // 4. [핵심] 영속성 컨텍스트 초기화 후 삭제 (삭제 충돌 방지)
-        itemRepository.deleteById(itemId); // delete(item) 대신 deleteById 사용 권장
-        entityManager.flush(); // 즉시 DB 반영
-        entityManager.clear(); // 영속성 컨텍스트 비우기
+        // 3. [핵심 해결책] JPA 영속성 컨텍스트 충돌 방지
+        // 객체(delete(item))가 아닌 ID 기반 삭제(deleteById)를 사용하고
+        // flush를 호출하여 즉시 DB에 반영합니다.
+        itemRepository.deleteById(itemId);
+
+        // 캐시를 비워서 남아있는 찌꺼기 데이터로 인한 충돌 방지
+        entityManager.flush();
+        entityManager.clear();
     }
 
     /**

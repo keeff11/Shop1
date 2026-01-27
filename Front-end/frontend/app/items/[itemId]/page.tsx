@@ -41,7 +41,7 @@ interface Item {
   thumbnailUrl?: string; 
   images: string[]; 
   status: string;
-  sellerId: number;        // [중요] 백엔드 DTO에 이 필드가 있어야 함
+  sellerId: number;
   sellerNickname?: string;
   createdAt: string;
   updatedAt: string;
@@ -121,16 +121,16 @@ export default function ItemDetailPage() {
           setReviews([]);
         }
 
-        // 3. 현재 로그인한 유저 정보 조회
+        // 3. 현재 로그인한 유저 정보 조회 (판매자 본인 확인용)
         try {
           const userRes = await fetchApi<ApiResponse<UserInfo>>("/user/my", {
-            credentials: "include" // 쿠키 전송
+            credentials: "include" // 중요: 쿠키 전송
           });
           if (userRes.data) {
             setCurrentUserId(userRes.data.userId);
           }
         } catch (error) {
-          console.log("로그인되어 있지 않음");
+          // 비로그인 상태 무시
         }
 
       } catch (err) {
@@ -144,13 +144,13 @@ export default function ItemDetailPage() {
     fetchData();
   }, [params.itemId]);
 
-  // [디버깅용 로그] - F12 콘솔에서 확인 가능
+  // [디버깅용 로그]
   useEffect(() => {
     if (item) {
       console.log("=== 권한 디버깅 ===");
       console.log("상품 ID:", item.id);
-      console.log("상품 판매자 ID (item.sellerId):", item.sellerId); // 여기가 undefined면 백엔드 문제
-      console.log("내 로그인 ID (currentUserId):", currentUserId);
+      console.log("상품 판매자 ID:", item.sellerId);
+      console.log("내 로그인 ID:", currentUserId);
       console.log("일치 여부:", Number(item.sellerId) === Number(currentUserId));
     }
   }, [item, currentUserId]);
@@ -245,7 +245,7 @@ export default function ItemDetailPage() {
   const reviewCount = item.reviewCount || 0;
   const viewCount = item.viewCount || 0;
 
-  // [핵심] 본인 확인 로직 (숫자 변환 비교로 안전하게)
+  // 본인 확인
   const isOwner = currentUserId && item.sellerId && (Number(currentUserId) === Number(item.sellerId));
 
   return (
@@ -303,14 +303,22 @@ export default function ItemDetailPage() {
                 {item.name}
               </h1>
               
-              {/* 삭제 버튼 (조건부 렌더링) */}
+              {/* [수정] 판매자 전용 버튼 그룹 (수정/삭제) */}
               {isOwner && (
-                <button 
-                  onClick={handleDeleteItem}
-                  className="shrink-0 px-3 py-1.5 text-xs font-bold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition"
-                >
-                  상품 삭제
-                </button>
+                <div className="flex gap-2 shrink-0">
+                  <button 
+                    onClick={() => router.push(`/items/${item.id}/edit`)}
+                    className="px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition"
+                  >
+                    수정
+                  </button>
+                  <button 
+                    onClick={handleDeleteItem}
+                    className="px-3 py-1.5 text-xs font-bold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                  >
+                    삭제
+                  </button>
+                </div>
               )}
             </div>
 
@@ -412,6 +420,13 @@ export default function ItemDetailPage() {
                           </div>
                         </div>
                         <p className="text-gray-700 pl-[52px]">{review.content}</p>
+                        {review.imageUrls && review.imageUrls.length > 0 && (
+                          <div className="flex gap-2 mt-4 pl-[52px]">
+                            {review.imageUrls.map((imgUrl, idx) => (
+                              <img key={idx} src={imgUrl} alt="Review" className="w-20 h-20 object-cover rounded-lg border border-gray-100" />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
