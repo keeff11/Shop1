@@ -46,7 +46,7 @@ public class Item {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ItemStatus status; // SELLING, STOPPED
+    private ItemStatus status; // SELLING, SOLD_OUT, HIDDEN, DELETED
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -61,7 +61,7 @@ public class Item {
 
     private String thumbnailUrl;
 
-    // ★ [추가] 조회수, 리뷰수, 평점 통계 필드
+    // 통계 필드
     @Column(nullable = false)
     @ColumnDefault("0")
     private int viewCount = 0;
@@ -76,7 +76,7 @@ public class Item {
 
     @Column(nullable = false)
     @ColumnDefault("0")
-    private int salesCount = 0; // 판매량 (인기순 정렬용)
+    private int salesCount = 0;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -84,8 +84,9 @@ public class Item {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    // [수정] Builder에 status 포함 및 기본값 설정 로직 추가
     @Builder
-    public Item(Long id, String name, int price, int quantity, ItemCategory itemCategory, String description, User seller) {
+    public Item(Long id, String name, int price, int quantity, ItemCategory itemCategory, String description, User seller, ItemStatus status) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -93,11 +94,27 @@ public class Item {
         this.itemCategory = itemCategory;
         this.description = description;
         this.seller = seller;
-        this.status = ItemStatus.SELLING;
+        // 빌더로 들어온 status가 없으면 SELLING으로 초기화
+        this.status = status != null ? status : ItemStatus.SELLING;
         this.stockStatus = (quantity > 0) ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK;
     }
 
     // --- 비즈니스 로직 메서드 ---
+
+    // [추가] 상태 변경 메서드 (Setter 대신 비즈니스 메서드로 사용 권장)
+    public void setStatus(ItemStatus status) {
+        this.status = status;
+    }
+
+    // [추가] 수량 변경 메서드 (재고 0이면 품절 처리 포함)
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+        if (this.quantity <= 0) {
+            this.stockStatus = StockStatus.OUT_OF_STOCK;
+        } else {
+            this.stockStatus = StockStatus.IN_STOCK;
+        }
+    }
 
     public void update(String name, int price, int quantity, ItemCategory category, String description) {
         this.name = name;
@@ -124,25 +141,19 @@ public class Item {
     }
 
     public void updateStock(int newQuantity) {
-        this.quantity = newQuantity;
-        if (this.quantity <= 0) {
-            this.stockStatus = StockStatus.OUT_OF_STOCK;
-        }
+        setQuantity(newQuantity);
     }
 
-    // ★ [추가] 조회수 증가
     public void increaseViewCount() {
         this.viewCount++;
     }
 
-    // ★ [추가] 리뷰 등록 시 평점/개수 갱신
     public void addReviewRating(int newRating) {
         double totalScore = this.averageRating * this.reviewCount;
         this.reviewCount++;
         this.averageRating = (totalScore + newRating) / this.reviewCount;
     }
 
-    // ★ [추가] 리뷰 삭제 시 평점/개수 갱신
     public void removeReviewRating(int oldRating) {
         if (this.reviewCount <= 1) {
             this.reviewCount = 0;

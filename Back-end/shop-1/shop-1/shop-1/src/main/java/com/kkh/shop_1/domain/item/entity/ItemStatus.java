@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum ItemStatus {
     SELLING("판매 중"),
     SOLD_OUT("판매 중지(품절)"),
-    HIDDEN("비노출");
+    HIDDEN("비노출"),
+    DELETED("삭제됨"); // [추가] 논리적 삭제를 위한 상태
 
     private final String description;
 }

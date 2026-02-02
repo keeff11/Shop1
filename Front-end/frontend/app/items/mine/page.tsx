@@ -36,6 +36,7 @@ export default function MyItemsPage() {
 
   const fetchMyItems = async () => {
     try {
+      // 내 상품 조회
       const res = await fetchApi<ApiResponse>("/items/me", { credentials: "include" });
       if (res.data) setItems(res.data);
     } catch (err: any) {
@@ -52,7 +53,7 @@ export default function MyItemsPage() {
       await fetchApi(`/items/${itemId}`, { method: "DELETE", credentials: "include" });
       toast.success("삭제 성공");
       
-      // [핵심] 삭제 즉시 반영
+      // 목록에서 즉시 제거
       setItems(prev => prev.filter(item => item.id !== itemId));
       
     } catch (err: any) {

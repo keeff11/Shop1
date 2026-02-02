@@ -3,6 +3,7 @@ package com.kkh.shop_1.domain.item.repository;
 import com.kkh.shop_1.domain.item.dto.ItemSearchCondition;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
+import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -25,26 +26,26 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
     @Override
     public Page<Item> search(ItemSearchCondition condition, Pageable pageable) {
-        // 1. 컨텐츠 조회
         List<Item> content = queryFactory
                 .selectFrom(item)
                 .leftJoin(item.images, itemImage).fetchJoin()
                 .where(
+                        statusNotDeleted(), // [추가] 삭제된 상품 제외
                         keywordContains(condition.getKeyword()),
                         categoryEq(condition.getCategory()),
-                        priceGoe(condition.getMinPrice()), // 최소 가격
-                        priceLoe(condition.getMaxPrice())  // 최대 가격
+                        priceGoe(condition.getMinPrice()),
+                        priceLoe(condition.getMaxPrice())
                 )
                 .orderBy(getOrderSpecifier(condition.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // 2. 카운트 쿼리 (최적화)
         JPAQuery<Long> countQuery = queryFactory
                 .select(item.count())
                 .from(item)
                 .where(
+                        statusNotDeleted(), // [추가] 카운트 쿼리에도 적용
                         keywordContains(condition.getKeyword()),
                         categoryEq(condition.getCategory()),
                         priceGoe(condition.getMinPrice()),
@@ -54,7 +55,11 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    // [유지] 지난번 해결된 검색 로직 (Hibernate 6 호환)
+    // [추가] 삭제된 상태(DELETED)가 아닌 상품만 필터링
+    private BooleanExpression statusNotDeleted() {
+        return item.status.ne(ItemStatus.DELETED);
+    }
+
     private BooleanExpression keywordContains(String keyword) {
         if (!StringUtils.hasText(keyword)) return null;
         String searchPattern = "%" + keyword + "%";
@@ -70,7 +75,6 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         }
     }
 
-    // 가격 필터 조건
     private BooleanExpression priceGoe(Integer minPrice) {
         return minPrice != null ? item.price.goe(minPrice) : null;
     }

@@ -141,7 +141,6 @@ export default function OrdersPage() {
                   </div>
                 </div>
 
-                {/* ★ [수정] 파일 경로가 orders/detail/[orderId] 이므로 href도 맞춰줍니다 */}
                 <Link
                   href={`/orders/detail/${order.orderId}`}
                   className="mt-6 flex items-center justify-center w-full py-4 bg-gray-50 text-gray-800 text-sm font-black rounded-2xl border border-gray-100 hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all duration-300"

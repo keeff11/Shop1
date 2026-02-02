@@ -16,6 +16,7 @@ const categoryMap: Record<string, string> = {
   OTHERS: "기타",
 };
 
+// 아이콘 컴포넌트들 생략 (기존과 동일)
 const StarIcon = ({ filled, className }: { filled?: boolean; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -29,6 +30,7 @@ const EyeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// 타입 정의
 interface Item {
   id: number;
   name: string;
@@ -72,7 +74,8 @@ interface PageResponse<T> {
 }
 
 interface UserInfo {
-  userId: number;
+  id?: number;
+  userId?: number;
   email: string;
   nickname: string;
 }
@@ -100,7 +103,6 @@ export default function ItemDetailPage() {
         const itemData = itemRes.data;
         setItem(itemData);
 
-        // 이미지 초기값 설정
         if (itemData.thumbnailUrl) {
             setSelectedImage(itemData.thumbnailUrl);
         } else if (itemData.images && itemData.images.length > 0) {
@@ -121,16 +123,18 @@ export default function ItemDetailPage() {
           setReviews([]);
         }
 
-        // 3. 현재 로그인한 유저 정보 조회 (판매자 본인 확인용)
+        // 3. 내 정보 조회 (주소 수정 완료: /users/my)
         try {
           const userRes = await fetchApi<ApiResponse<UserInfo>>("/user/my", {
-            credentials: "include" // 중요: 쿠키 전송
+            credentials: "include" 
           });
+          
           if (userRes.data) {
-            setCurrentUserId(userRes.data.userId);
+            const myId = userRes.data.userId || userRes.data.id;
+            setCurrentUserId(myId || null);
           }
         } catch (error) {
-          // 비로그인 상태 무시
+          console.log("로그인 필요");
         }
 
       } catch (err) {
@@ -143,17 +147,6 @@ export default function ItemDetailPage() {
 
     fetchData();
   }, [params.itemId]);
-
-  // [디버깅용 로그]
-  useEffect(() => {
-    if (item) {
-      console.log("=== 권한 디버깅 ===");
-      console.log("상품 ID:", item.id);
-      console.log("상품 판매자 ID:", item.sellerId);
-      console.log("내 로그인 ID:", currentUserId);
-      console.log("일치 여부:", Number(item.sellerId) === Number(currentUserId));
-    }
-  }, [item, currentUserId]);
 
   const moveToReviews = () => {
     setActiveTab("reviews");
@@ -177,17 +170,17 @@ export default function ItemDetailPage() {
         credentials: "include",
         body: JSON.stringify({ itemId: item.id, quantity: 1 }),
       });
-      toast.success("장바구니에 추가되었습니다! 🛒", { id: toastId });
+      toast.success("장바구니에 추가되었습니다!", { id: toastId });
       window.dispatchEvent(new Event("cart-updated"));
     } catch (err) {
       console.error(err);
-      toast.error("장바구니 추가에 실패했습니다.", { id: toastId });
+      toast.error("장바구니 추가 실패", { id: toastId });
     }
   };
 
   const handleBuyNow = () => {
     if (!item) {
-      toast.error("상품 정보를 불러오는 중입니다.");
+      toast.error("상품 정보 로딩 중...");
       return;
     }
     const finalPrice = item.discountPrice ? item.discountPrice : item.price;
@@ -209,11 +202,11 @@ export default function ItemDetailPage() {
   const handleDeleteItem = async () => {
     if (!item) return;
     
-    if (!confirm("정말로 이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.")) {
+    if (!confirm("정말로 이 상품을 삭제하시겠습니까?")) {
       return;
     }
 
-    const toastId = toast.loading("상품을 삭제하고 있습니다...");
+    const toastId = toast.loading("삭제 처리 중...");
 
     try {
       await fetchApi(`/items/${item.id}`, {
@@ -225,7 +218,7 @@ export default function ItemDetailPage() {
       router.replace("/items"); 
     } catch (err) {
       console.error(err);
-      toast.error("상품 삭제에 실패했습니다. 권한을 확인해주세요.", { id: toastId });
+      toast.error("삭제 실패", { id: toastId });
     }
   };
 
@@ -235,7 +228,7 @@ export default function ItemDetailPage() {
     </div>
   );
   
-  if (!item) return <div className="flex justify-center items-center min-h-[60vh]">아이템을 찾을 수 없습니다.</div>;
+  if (!item) return <div className="flex justify-center items-center min-h-[60vh]">아이템 없음</div>;
 
   const discountRate = item.discountPrice 
     ? Math.round(((item.price - item.discountPrice) / item.price) * 100) 
@@ -303,7 +296,7 @@ export default function ItemDetailPage() {
                 {item.name}
               </h1>
               
-              {/* [수정] 판매자 전용 버튼 그룹 (수정/삭제) */}
+              {/* [수정] 본인일 때 수정/삭제 버튼 표시 */}
               {isOwner && (
                 <div className="flex gap-2 shrink-0">
                   <button 
@@ -367,7 +360,7 @@ export default function ItemDetailPage() {
           </div>
         </div>
 
-        {/* 하단 탭 (상세/리뷰) */}
+        {/* 하단 탭 */}
         <div id="detail-section"> 
           <div className="flex border-b border-gray-200 mb-10 sticky top-[72px] bg-white z-10">
             <button
@@ -420,13 +413,6 @@ export default function ItemDetailPage() {
                           </div>
                         </div>
                         <p className="text-gray-700 pl-[52px]">{review.content}</p>
-                        {review.imageUrls && review.imageUrls.length > 0 && (
-                          <div className="flex gap-2 mt-4 pl-[52px]">
-                            {review.imageUrls.map((imgUrl, idx) => (
-                              <img key={idx} src={imgUrl} alt="Review" className="w-20 h-20 object-cover rounded-lg border border-gray-100" />
-                            ))}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>

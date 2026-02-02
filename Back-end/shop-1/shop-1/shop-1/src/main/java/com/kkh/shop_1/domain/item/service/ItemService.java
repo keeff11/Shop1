@@ -5,12 +5,11 @@ import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
 import com.kkh.shop_1.domain.item.entity.ItemImage;
+import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,9 +35,6 @@ public class ItemService {
 
     private static final String DEFAULT_IMAGE = "/no_image.jpg";
 
-    @PersistenceContext
-    private EntityManager entityManager; // [추가] 직접 영속성 관리
-
     /**
      * 상품 등록
      */
@@ -49,6 +45,9 @@ public class ItemService {
 
         User seller = userService.findById(sellerId);
         Item item = convertToEntity(createItemRequestDTO, seller);
+
+        // 초기 상태 설정
+        item.setStatus(ItemStatus.SELLING);
 
         itemRepository.save(item);
         processItemImages(item, images);
@@ -90,48 +89,55 @@ public class ItemService {
     }
 
     /**
-     * 상품 삭제 (배포 서버 동시성 에러 해결 버전)
+     * [핵심 수정] 상품 논리적 삭제 (Soft Delete)
+     * - DB에서 데이터를 지우지 않고 상태만 'DELETED'로 변경
+     * - 외래키(주문 내역 등) 제약 조건 에러 해결
      */
     public void deleteItem(Long itemId, Long currentUserId) {
-        // 1. 권한 확인을 위해 먼저 조회 (필요한 최소 정보만)
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
 
+        // 본인 확인
         if (!item.getSeller().getId().equals(currentUserId)) {
             throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
         }
 
-        // 2. S3 이미지 삭제 (트랜잭션과 무관하게 실행되므로 삭제 전 수행)
+        // 상태를 '삭제됨'으로 변경 (Soft Delete)
+        item.setStatus(ItemStatus.DELETED);
+
+        // (선택 사항) 재고를 0으로 처리하거나, 이미지 삭제 로직 등은 정책에 따라 결정
+        // 여기서는 데이터 보존을 위해 이미지 삭제 로직은 주석 처리하거나 제거하는 것이 안전할 수 있습니다.
+        // 하지만 용량 확보가 중요하다면 아래 코드를 유지하세요.
+        /*
         if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().equals(DEFAULT_IMAGE)) {
             s3Service.deleteImageByUrl(item.getThumbnailUrl());
         }
         item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
+        */
 
-        // 3. [핵심 해결책] JPA 영속성 컨텍스트 충돌 방지
-        // 객체(delete(item))가 아닌 ID 기반 삭제(deleteById)를 사용하고
-        // flush를 호출하여 즉시 DB에 반영합니다.
-        itemRepository.deleteById(itemId);
-
-        // 캐시를 비워서 남아있는 찌꺼기 데이터로 인한 충돌 방지
-        entityManager.flush();
-        entityManager.clear();
+        log.info("상품 논리 삭제 완료 (ID: {})", itemId);
     }
 
     /**
      * 상품 상세 조회
      */
     public ItemDetailDTO getItemDetail(Long itemId) {
-        // [핵심 수정] DB Atomic Update로 조회수 증가 (동시성 해결)
+        // DB Atomic Update로 조회수 증가
         itemRepository.increaseViewCount(itemId);
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다. ID: " + itemId));
 
+        // 삭제된 상품 접근 차단 (선택 사항)
+        if (item.getStatus() == ItemStatus.DELETED) {
+            throw new EntityNotFoundException("삭제된 상품입니다.");
+        }
+
         return ItemDetailDTO.from(item);
     }
 
     /**
-     * [핵심 수정] 재고 차감 (동시성 해결을 위해 OrderService에서 호출)
+     * 재고 차감
      */
     public void decreaseStock(Long itemId, int quantity) {
         int updatedRows = itemRepository.decreaseStock(itemId, quantity);
@@ -144,15 +150,19 @@ public class ItemService {
 
     @Transactional(readOnly = true)
     public List<ItemSummaryDTO> getMyItems(Long sellerId) {
+        // 내가 등록한 상품 중 삭제되지 않은 것만 조회 (필터링 추가 필요 시 리포지토리 메서드 수정 권장)
+        // 현재 로직: itemRepository.findBySellerId... -> DELETED 포함 여부는 리포지토리 쿼리에 따라 다름
+        // 간단하게 여기서 필터링하거나, 리포지토리 쿼리에 조건 추가 필요
         return itemRepository.findBySellerIdOrderByCreatedAtDesc(sellerId).stream()
+                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ItemSummaryDTO> getAllItems() {
-        // [핵심 수정] Fetch Join을 사용하여 N+1 문제 해결
         return itemRepository.findAllWithImages().stream()
+                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
@@ -161,6 +171,7 @@ public class ItemService {
     public List<ItemSummaryDTO> getItemsByCategory(String categoryName) {
         ItemCategory category = parseCategory(categoryName);
         return itemRepository.findByItemCategory(category).stream()
+                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
@@ -217,6 +228,7 @@ public class ItemService {
                 .itemCategory(parseCategory(request.getCategory()))
                 .description(request.getDescription())
                 .seller(seller)
+                .status(ItemStatus.SELLING) // 기본 상태
                 .build();
     }
 
@@ -228,12 +240,10 @@ public class ItemService {
         }
     }
 
-    // [수정] 검색 결과 페이징 처리
+    // 검색 결과 페이징 처리
     @Transactional(readOnly = true)
     public Page<ItemSummaryDTO> searchItems(ItemSearchCondition condition, Pageable pageable) {
         return itemRepository.search(condition, pageable)
                 .map(ItemSummaryDTO::from);
     }
-
-
 }

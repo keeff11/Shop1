@@ -58,7 +58,7 @@ export default function PaymentPage() {
     setOrderItems(JSON.parse(saved).itemOrders || []);
 
     // 2. 사용자의 기존 배송지 목록 조회
-    fetchApi<{ data: Address[] }>("/addresses", { credentials: "include" })
+    fetchApi<{ data: Address[] }>("/user/addresses", { credentials: "include" })
       .then(res => {
         if (res.data && res.data.length > 0) {
           setAddresses(res.data);
