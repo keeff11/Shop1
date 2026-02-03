@@ -400,7 +400,7 @@ function CategoryContent() {
                         );
                     })}
                 </div>
-
+                
                 <button
                     onClick={() => handlePageChange(page + 1)}
                     disabled={page === totalPages - 1}
