@@ -1,6 +1,7 @@
 package com.kkh.shop_1.domain.order.controller;
 
 import com.kkh.shop_1.common.ApiResponse;
+import com.kkh.shop_1.domain.order.dto.OrderApproveDTO;
 import com.kkh.shop_1.domain.order.dto.OrderDetailDTO;
 import com.kkh.shop_1.domain.order.dto.OrderRequestDTO;
 import com.kkh.shop_1.domain.order.dto.OrderResponseDTO;
@@ -34,28 +35,41 @@ public class OrderController {
     }
 
     /**
-     * [결제 승인]
+     * 결제 승인 요청 (DTO 사용 버전)
      */
     @GetMapping("/payment/approve")
-    public ResponseEntity<ApiResponse<OrderDetailDTO>> approveOrder(
-            @RequestParam("orderId") Long orderId,
-            @RequestParam("pg_token") String pgToken,
+    public ApiResponse<OrderDetailDTO> approve(
+            @ModelAttribute OrderApproveDTO request,
             @AuthenticationPrincipal Long userId
     ) {
-        // 서비스 메서드 호출 시 인자 3개 전달
-        OrderDetailDTO response = orderService.approveOrder(orderId, pgToken, userId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        // Service 메서드 호출 시 DTO의 값을 꺼내서 전달
+        return ApiResponse.success(orderService.approveOrder(
+                request,
+                userId
+        ));
     }
 
     /**
      * [단건 상세 조회]
+
      */
     @GetMapping("/detail/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailDTO>> getOrder(
-            @PathVariable Long orderId,
+            @PathVariable("orderId") String orderIdStr,
             @AuthenticationPrincipal Long userId
     ) {
-        OrderDetailDTO orderDetail = orderService.getOrder(userId, orderId);
+        Long realOrderId;
+        try {
+            if (orderIdStr.startsWith("ORDER_")) {
+                realOrderId = Long.parseLong(orderIdStr.replace("ORDER_", ""));
+            } else {
+                realOrderId = Long.parseLong(orderIdStr);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("유효하지 않은 주문 ID 형식입니다: " + orderIdStr);
+        }
+
+        OrderDetailDTO orderDetail = orderService.getOrder(userId, realOrderId);
         return ResponseEntity.ok(ApiResponse.success(orderDetail));
     }
 

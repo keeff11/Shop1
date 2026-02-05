@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react"; // ★ Suspense 추가
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchApi } from "@/lib/api";
-import { toast } from "react-hot-toast"; // 앞서 설정한 toast 적용
+import { toast } from "sonner"; // toast 라이브러리 확인 필요
 
-// 실제 결제 승인 로직을 수행하는 내부 컴포넌트
 function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,12 +14,21 @@ function OrderSuccessContent() {
   useEffect(() => {
     if (processedRef.current) return;
 
+    // URL 파라미터 읽기
     const orderId = searchParams.get("orderId");
+    
+    // 카카오/네이버
     const pgToken = searchParams.get("pg_token");
+    
+    // 토스페이먼츠
+    const paymentKey = searchParams.get("paymentKey");
+    const amount = searchParams.get("amount");
 
-    if (!orderId || !pgToken) {
-      toast.error("유효하지 않은 결제 정보입니다.");
-      router.replace("/cart");
+    // [수정] 유효성 검사: pgToken이나 paymentKey 중 하나라도 있으면 OK
+    if (!orderId || (!pgToken && !paymentKey)) {
+      // 파라미터가 아예 없는 경우에만 에러 처리
+      // toast.error("유효하지 않은 결제 정보입니다.");
+      // router.replace("/cart");
       return;
     }
 
@@ -28,25 +36,33 @@ function OrderSuccessContent() {
       processedRef.current = true;
       
       try {
-        // 1. 백엔드 승인 API 호출
-        await fetchApi(
-          `/orders/payment/approve?orderId=${orderId}&pg_token=${pgToken}`,
-          { credentials: "include" }
-        );
-
-        // 2. 헤더 장바구니 갱신 신호
-        window.dispatchEvent(new Event("cart-updated"));
-
-        setStatus("success");
-        sessionStorage.removeItem("checkoutData");
+        // [수정] API 호출 URL 구성
+        let apiUrl = `/orders/payment/approve?orderId=${orderId}`;
         
+        if (pgToken) {
+            apiUrl += `&pg_token=${pgToken}`;
+        }
+        if (paymentKey) {
+            apiUrl += `&paymentKey=${paymentKey}&amount=${amount}`;
+        }
+
+        // 1. 백엔드 승인 API 호출
+        await fetchApi(apiUrl, { credentials: "include" });
+
+        // 2. 장바구니 갱신 등 후처리
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event("cart-updated"));
+            sessionStorage.removeItem("checkoutData");
+        }
+        
+        setStatus("success");
         toast.success("결제가 정상적으로 완료되었습니다! 🎉");
         router.replace(`/orders/detail/${orderId}`);
         
-      } catch (error) {
+      } catch (error: any) {
         console.error("결제 승인 실패:", error);
         setStatus("error");
-        toast.error("결제 승인 처리에 실패했습니다.");
+        toast.error(error.message || "결제 승인 처리에 실패했습니다.");
         router.replace("/cart");
       }
     };
@@ -54,6 +70,7 @@ function OrderSuccessContent() {
     approvePayment();
   }, [searchParams, router]);
 
+  // ... (UI 부분 동일) ...
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-2xl shadow-lg border text-center max-w-sm w-full">
@@ -71,16 +88,9 @@ function OrderSuccessContent() {
   );
 }
 
-// 메인 페이지 컴포넌트: 빌드 오류 방지를 위해 Suspense로 래핑
 export default function OrderSuccessPage() {
   return (
-    <Suspense 
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-        </div>
-      }
-    >
+    <Suspense fallback={<div>Loading...</div>}>
       <OrderSuccessContent />
     </Suspense>
   );

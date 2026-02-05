@@ -13,5 +13,7 @@ public class PaymentApproveRequestDTO {
     private String partnerUserId;
     private String pgToken; // 카카오
     private String paymentId; // 네이버
-}
 
+    private String paymentKey; //토스페이
+    private Integer amount;
+}

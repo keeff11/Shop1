@@ -60,33 +60,46 @@ public class OrderService {
     /**
      * 결제 승인 완료 처리 및 장바구니 비우기
      */
-    public OrderDetailDTO approveOrder(Long orderId, String pgToken, Long userId) {
-        Order order = fetchOrder(orderId);
 
-        // 1. 본인 주문 검증
+    public OrderDetailDTO approveOrder(OrderApproveDTO dto, Long userId) {
+        // 1. "ORDER_" 접두사 제거 및 숫자 변환 로직 추가
+        Long realOrderId;
+        try {
+            String rawId = dto.getOrderId();
+            if (rawId.startsWith("ORDER_")) {
+                realOrderId = Long.parseLong(rawId.replace("ORDER_", ""));
+            } else {
+                realOrderId = Long.parseLong(rawId);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("잘못된 주문 ID 형식입니다: " + dto.getOrderId());
+        }
+
+        // 2. 변환된 realOrderId로 주문 조회
+        Order order = fetchOrder(realOrderId);
+
+        // 3. 본인 주문 검증
         validateOrderOwner(order, userId);
 
-        // 2. PG사 승인 요청
+        // 4. PG사 승인 요청
         PaymentApproveRequestDTO approveRequest = PaymentApproveRequestDTO.builder()
                 .paymentType(order.getPaymentType())
+                // 토스 결제 시엔 DB의 TID가 "ORDER_..." 형식이므로 그대로 사용
                 .tid(order.getTid())
                 .partnerOrderId(order.getId().toString())
                 .partnerUserId(userId.toString())
-                .pgToken(pgToken)
+                .pgToken(dto.getPg_token())
+                .paymentKey(dto.getPaymentKey())
+                .amount(dto.getAmount())
                 .build();
 
         paymentServiceFactory.getService(order.getPaymentType()).approve(approveRequest);
 
-        // 3. 주문 상태 변경 (PAID)
+        // 5. 주문 상태 변경 및 저장
         order.completePayment(order.getTid());
-
-        // [핵심 수정] 상태 변경 사항 즉시 반영 (Flush)
         orderRepository.saveAndFlush(order);
 
-        // 4. DTO 변환
-        OrderDetailDTO responseDTO = OrderDetailDTO.from(order);
-
-        // 5. 장바구니 비우기 (오류 발생 시 로그만 남기고 주문 로직은 정상 완료)
+        // 6. 장바구니 비우기 (기존 로직 유지)
         try {
             List<Long> orderedItemIds = order.getOrderItems().stream()
                     .map(orderItem -> orderItem.getItem().getId())
@@ -94,15 +107,12 @@ public class OrderService {
 
             if (!orderedItemIds.isEmpty()) {
                 cartItemService.deleteCartItemsByUserIdAndItemIds(userId, orderedItemIds);
-                log.info("장바구니 상품 삭제 완료 - UserID: {}, ItemIDs: {}", userId, orderedItemIds);
             }
         } catch (Exception e) {
-            log.error("장바구니 삭제 중 오류 발생 (주문은 성공): {}", e.getMessage());
+            log.error("장바구니 삭제 실패", e);
         }
 
-        log.info("주문 결제 승인 완료 - 주문ID: {}, TID: {}", orderId, order.getTid());
-
-        return responseDTO;
+        return OrderDetailDTO.from(order);
     }
 
     public Optional<OrderItem> findByOrderItemId(Long orderItemId) {
@@ -172,7 +182,7 @@ public class OrderService {
     }
 
     private Order fetchOrder(Long orderId) {
-        return orderRepository.findById(orderId)
+        return orderRepository.findByIdWithFetch(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주문이 존재하지 않습니다. ID: " + orderId));
     }
 

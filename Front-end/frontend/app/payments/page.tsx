@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
+import Script from "next/script";
 
-// 다음 주소 찾기 모듈 (SSR 제외)
 const DaumPostcode = dynamic(() => import("react-daum-postcode"), { ssr: false });
+
+const KAKAO_PAY_LOGO = "/kakao_pay.png";
+const NAVER_PAY_LOGO = "/naver_pay.svg";
+const TOSS_PAY_LOGO = "/toss_pay.png";
+
+// [수정] 환경 변수에서 클라이언트 키 로드
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
 
 interface OrderItem {
   itemId: number;
@@ -26,16 +34,26 @@ interface Address {
   isDefault: boolean;
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+interface OrderResponse {
+  orderId: number;
+  tid: string;          
+  redirectUrl?: string; 
+  orderDate: string;
+}
+
 export default function PaymentPage() {
   const router = useRouter();
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   
-  // 신규 배송지 입력 모드 여부
   const [useNewAddress, setUseNewAddress] = useState(false);
-  
-  // 신규 배송지 데이터
   const [newAddress, setNewAddress] = useState({
     zipCode: "",
     roadAddress: "",
@@ -44,235 +62,301 @@ export default function PaymentPage() {
     recipientPhone: "",
   });
   
+  // [토스페이 포함] 결제 수단 상태 관리
+  const [paymentType, setPaymentType] = useState<"KAKAO_PAY" | "NAVER_PAY" | "TOSS_PAY">("KAKAO_PAY");
   const [showPostcode, setShowPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // 1. 세션 스토리지에서 결제할 상품 정보 로드
+    // 1. 주문 정보 로드
     const saved = sessionStorage.getItem("checkoutData");
     if (!saved) {
-      alert("잘못된 접근입니다.");
-      router.push("/cart");
       return;
     }
-    setOrderItems(JSON.parse(saved).itemOrders || []);
+    try {
+      const parsed = JSON.parse(saved);
+      setOrderItems(parsed.itemOrders || []);
+    } catch (e) {
+      console.error(e);
+    }
 
-    // 2. 사용자의 기존 배송지 목록 조회
-    fetchApi<{ data: Address[] }>("/user/addresses", { credentials: "include" })
+    // 2. 배송지 목록 조회
+    fetchApi<ApiResponse<Address[]>>("/user/addresses", { credentials: "include" })
       .then(res => {
-        if (res.data && res.data.length > 0) {
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
           setAddresses(res.data);
-          // 기본 배송지 혹은 첫 번째 배송지 선택
           const def = res.data.find(a => a.isDefault) || res.data[0];
           setSelectedAddressId(def.id);
         } else {
-          // 배송지가 없으면 신규 입력 모드로 전환
           setUseNewAddress(true);
         }
       })
       .catch((err) => {
-        console.error("배송지 조회 실패:", err);
+        console.warn("배송지 로드 실패:", err);
         setUseNewAddress(true);
       });
   }, [router]);
 
-  // 총 결제 금액 계산
   const totalPrice = orderItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const finalPrice = totalPrice + 3000; 
 
-  /**
-   * 결제 요청 함수
-   */
-  const requestPayment = async (paymentType: "KAKAO_PAY" | "NAVER_PAY") => {
-    if (orderItems.length === 0) return alert("상품 정보가 없습니다.");
-    if (!useNewAddress && !selectedAddressId) return alert("배송지를 선택해주세요.");
-    
-    // 신규 배송지 입력 시 유효성 검사 (간단 예시)
+  const handlePayment = async () => {
+    // 유효성 검사
+    if (orderItems.length === 0) return toast.error("결제할 상품이 없습니다.");
+    if (!useNewAddress && !selectedAddressId) return toast.error("배송지를 선택해주세요.");
     if (useNewAddress && (!newAddress.zipCode || !newAddress.recipientName)) {
-      return alert("배송지 정보를 모두 입력해주세요.");
+      return toast.error("배송지 정보를 모두 입력해주세요.");
+    }
+    
+    // 환경 변수 로드 체크
+    if (paymentType === "TOSS_PAY" && !TOSS_CLIENT_KEY) {
+      return toast.error("토스 클라이언트 키가 설정되지 않았습니다.");
     }
 
     setLoading(true);
     try {
-      // 결제 요청 데이터 구성
       const body = {
         paymentType,
         itemOrders: orderItems.map(i => ({ itemId: i.itemId, quantity: i.quantity })),
-        totalAmount: totalPrice,
         
-        // 배송지 정보 (기존 선택 vs 신규 입력)
         addressId: useNewAddress ? null : selectedAddressId,
-        zipCode: useNewAddress ? newAddress.zipCode : "",
-        roadAddress: useNewAddress ? newAddress.roadAddress : "",
-        detailAddress: useNewAddress ? newAddress.detailAddress : "",
-        recipientName: useNewAddress ? newAddress.recipientName : "",
-        recipientPhone: useNewAddress ? newAddress.recipientPhone : "",
+        zipCode: useNewAddress ? newAddress.zipCode : null,
+        roadAddress: useNewAddress ? newAddress.roadAddress : null,
+        detailAddress: useNewAddress ? newAddress.detailAddress : null,
+        recipientName: useNewAddress ? newAddress.recipientName : null,
+        recipientPhone: useNewAddress ? newAddress.recipientPhone : null,
         
-        // approvalUrl에 {orderId} 플레이스홀더 포함
-        approvalUrl: `${window.location.origin}/orders/success?orderId={orderId}`,
+        approvalUrl: `${window.location.origin}/orders/success`,
         cancelUrl: `${window.location.origin}/cart`,
         failUrl: `${window.location.origin}/cart`,
       };
 
-      // 백엔드 주문 생성 API 호출
-      const res = await fetchApi<{ data: { redirectUrl: string } }>("/orders/create", {
+      // 1. 주문 생성 요청
+      const res = await fetchApi<ApiResponse<OrderResponse>>("/orders/create", {
         method: "POST",
         body: JSON.stringify(body),
         credentials: "include"
       });
 
-      // PG사 결제 페이지로 리다이렉트
-      if (res.data?.redirectUrl) {
-        window.location.href = res.data.redirectUrl;
+      if (!res.success || !res.data) {
+        throw new Error(res.message || "주문 생성 실패");
       }
-    } catch (err) {
+
+      const { tid, redirectUrl } = res.data;
+
+      // 2. 결제 수단별 처리
+      if (paymentType === "KAKAO_PAY" || paymentType === "NAVER_PAY") {
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          throw new Error("결제 페이지 URL을 받지 못했습니다.");
+        }
+      } else if (paymentType === "TOSS_PAY") {
+        // [토스] SDK 호출
+        const tossPayments = (window as any).TossPayments(TOSS_CLIENT_KEY);
+        
+        await tossPayments.requestPayment("카드", {
+          amount: finalPrice,
+          orderId: tid, // 백엔드에서 생성한 TID 사용
+          orderName: orderItems[0].itemName + (orderItems.length > 1 ? ` 외 ${orderItems.length - 1}건` : ""),
+          customerName: "구매자", 
+          successUrl: `${window.location.origin}/orders/success`,
+          failUrl: `${window.location.origin}/orders/fail`,
+        });
+      }
+
+    } catch (err: any) {
       console.error(err);
-      alert("결제 요청 중 오류가 발생했습니다.");
-    } finally {
+      // 토스 결제 취소 에러 무시
+      if (err.code === "USER_CANCEL") {
+        toast.info("결제를 취소했습니다.");
+      } else {
+        toast.error(err.message || "결제 요청 중 오류가 발생했습니다.");
+      }
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-center mb-8">주문 / 결제</h1>
-
-        {/* 1. 주문 상품 리스트 */}
-        <div className="bg-white rounded-2xl p-6 border shadow-sm">
-          <h2 className="font-bold text-lg mb-4 border-b pb-2 text-gray-700">주문 상품 ({orderItems.length})</h2>
-          <div className="divide-y">
-            {orderItems.map((item, idx) => (
-              <div key={idx} className="py-4 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  {item.imageUrl && (
-                    <img 
-                      src={item.imageUrl} 
-                      className="w-14 h-14 object-cover rounded-lg bg-gray-100" 
-                      alt={item.itemName} 
-                    />
-                  )}
-                  <div>
-                    <p className="font-semibold text-gray-800">{item.itemName}</p>
-                    <p className="text-sm text-gray-500">{item.quantity}개</p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Script src="https://js.tosspayments.com/v1/payment" strategy="lazyOnload" />
+      
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
+        
+        {/* 왼쪽 섹션: 상품 & 배송지 */}
+        <div className="space-y-8">
+          {/* 상품 목록 */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 className="font-bold text-xl mb-6 text-gray-900 flex items-center gap-2">
+              🛒 주문 상품 <span className="text-gray-400 text-sm font-normal">({orderItems.length}개)</span>
+            </h2>
+            <div className="space-y-4">
+              {orderItems.map((item, idx) => (
+                <div key={idx} className="flex gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                    <img src={item.imageUrl || "/no_image.jpg"} className="w-full h-full object-cover" alt={item.itemName} />
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="font-medium text-gray-900 line-clamp-1 mb-1">{item.itemName}</p>
+                    <p className="text-sm text-gray-500 mb-1">수량 {item.quantity}개</p>
+                    <p className="font-bold text-gray-900">{item.price.toLocaleString()}원</p>
                   </div>
                 </div>
-                <span className="font-bold">{(item.price * item.quantity).toLocaleString()}원</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t flex justify-between items-center text-xl font-black">
-            <span className="text-gray-600">총 결제 금액</span>
-            <span className="text-blue-600">{totalPrice.toLocaleString()}원</span>
-          </div>
-        </div>
-
-        {/* 2. 배송 정보 입력/선택 */}
-        <div className="bg-white rounded-2xl p-6 border shadow-sm space-y-5">
-          <h2 className="font-bold text-lg border-b pb-2">배송 정보</h2>
-          
-          {/* 탭 버튼 */}
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
-            <button 
-              onClick={() => setUseNewAddress(false)} 
-              className={`flex-1 py-2 rounded-lg font-bold transition ${!useNewAddress ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
-            >
-              기존 배송지
-            </button>
-            <button 
-              onClick={() => setUseNewAddress(true)} 
-              className={`flex-1 py-2 rounded-lg font-bold transition ${useNewAddress ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
-            >
-              신규 입력
-            </button>
-          </div>
-
-          {!useNewAddress ? (
-            // 기존 배송지 목록
-            <div className="space-y-2">
-              {addresses.map(addr => (
-                <label key={addr.id} className={`flex items-center gap-4 border p-4 rounded-xl cursor-pointer transition ${selectedAddressId === addr.id ? "border-gray-800 bg-gray-50" : "border-gray-100"}`}>
-                  <input 
-                    type="radio" 
-                    checked={selectedAddressId === addr.id} 
-                    onChange={() => setSelectedAddressId(addr.id)} 
-                    className="w-4 h-4 accent-gray-800" 
-                  />
-                  <div className="text-sm flex-1">
-                    <p className="font-bold text-gray-900">{addr.recipientName} ({addr.recipientPhone})</p>
-                    <p className="text-gray-600">{addr.roadAddress} {addr.detailAddress}</p>
-                  </div>
-                </label>
               ))}
-              {addresses.length === 0 && <p className="text-center text-gray-500 py-4">등록된 배송지가 없습니다.</p>}
             </div>
-          ) : (
-            // 신규 배송지 입력 폼
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <input type="text" placeholder="우편번호" value={newAddress.zipCode} readOnly className="flex-1 p-3 border rounded-xl bg-gray-50 outline-none" />
-                <button onClick={() => setShowPostcode(true)} className="px-5 bg-gray-800 text-white rounded-xl text-sm font-bold">주소 찾기</button>
+          </div>
+
+          {/* 배송지 정보 */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-bold text-xl text-gray-900">📍 배송 정보</h2>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button 
+                  onClick={() => setUseNewAddress(false)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${!useNewAddress ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  기존 배송지
+                </button>
+                <button 
+                  onClick={() => setUseNewAddress(true)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${useNewAddress ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  신규 입력
+                </button>
               </div>
-              <input type="text" placeholder="기본 주소" value={newAddress.roadAddress} readOnly className="w-full p-3 border rounded-xl bg-gray-50 outline-none" />
-              <input 
-                type="text" 
-                placeholder="상세 주소" 
-                onChange={e => setNewAddress({...newAddress, detailAddress: e.target.value})} 
-                className="w-full p-3 border rounded-xl outline-none focus:border-gray-400" 
-              />
-              <input 
-                type="text" 
-                placeholder="수령인 성함" 
-                onChange={e => setNewAddress({...newAddress, recipientName: e.target.value})} 
-                className="w-full p-3 border rounded-xl outline-none focus:border-gray-400" 
-              />
-              <input 
-                type="text" 
-                placeholder="수령인 연락처" 
-                onChange={e => setNewAddress({...newAddress, recipientPhone: e.target.value})} 
-                className="w-full p-3 border rounded-xl outline-none focus:border-gray-400" 
-              />
             </div>
-          )}
+
+            {!useNewAddress ? (
+              <div className="space-y-3">
+                {addresses.map(addr => (
+                  <label key={addr.id} className={`group flex items-start gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedAddressId === addr.id ? "border-black bg-gray-50/50" : "border-gray-100 hover:border-gray-300 hover:bg-gray-50"}`}>
+                    <div className="mt-1">
+                      <input type="radio" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} className="w-4 h-4 text-black focus:ring-black cursor-pointer" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-gray-900">{addr.recipientName}</span>
+                        {addr.isDefault && <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">기본</span>}
+                      </div>
+                      <p className="text-sm text-gray-500 mb-1">{addr.recipientPhone}</p>
+                      <p className="text-sm text-gray-700 leading-snug">[{addr.zipCode}] {addr.roadAddress} {addr.detailAddress}</p>
+                    </div>
+                  </label>
+                ))}
+                {addresses.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    저장된 배송지가 없습니다.<br/>새로 입력해주세요.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newAddress.zipCode} 
+                    placeholder="우편번호" 
+                    readOnly 
+                    className="w-32 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none" 
+                  />
+                  <button onClick={() => setShowPostcode(true)} className="flex-1 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-colors">
+                    주소 검색
+                  </button>
+                </div>
+                <input type="text" value={newAddress.roadAddress} placeholder="기본 주소" readOnly className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none" />
+                <input type="text" placeholder="상세 주소 (동/호수)" onChange={e => setNewAddress({...newAddress, detailAddress: e.target.value})} className="w-full p-3 border border-gray-200 rounded-xl text-sm focus:border-black focus:ring-1 focus:ring-black outline-none transition-all" />
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="text" placeholder="수령인 이름" onChange={e => setNewAddress({...newAddress, recipientName: e.target.value})} className="p-3 border border-gray-200 rounded-xl text-sm focus:border-black focus:ring-1 focus:ring-black outline-none transition-all" />
+                  <input type="text" placeholder="연락처 (- 없이)" onChange={e => setNewAddress({...newAddress, recipientPhone: e.target.value})} className="p-3 border border-gray-200 rounded-xl text-sm focus:border-black focus:ring-1 focus:ring-black outline-none transition-all" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* 3. 결제 수단 선택 버튼 (수정됨: 배경 투명, 테두리 추가) */}
-        <div className="grid grid-cols-1 gap-3">
-          {/* 카카오페이 버튼 */}
-          <button 
-            onClick={() => requestPayment("KAKAO_PAY")} 
-            disabled={loading} 
-            className="w-full h-16 bg-transparent border border-gray-300 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition shadow-sm"
-          >
-            <img src="/kakao_pay.png" className="h-6" alt="카카오페이" />
-            <span className="font-bold text-lg text-gray-800">카카오페이 결제</span>
-          </button>
-          
-          {/* 네이버페이 버튼 (수정됨: 흰색 필터 제거, 글자색 변경) */}
-          <button 
-            onClick={() => requestPayment("NAVER_PAY")} 
-            disabled={loading} 
-            className="w-full h-16 bg-transparent border border-gray-300 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition shadow-sm"
-          >
-            <img src="/naver_pay.svg" className="h-6" alt="네이버페이" />
-            <span className="font-bold text-lg text-gray-800">네이버페이 결제</span>
-          </button>
+        {/* 오른쪽 섹션: 결제 정보 */}
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 h-fit sticky top-24">
+            <h2 className="font-bold text-xl mb-6 text-gray-900">💳 결제 정보</h2>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between text-gray-500">
+                <span>총 상품금액</span>
+                <span>{totalPrice.toLocaleString()}원</span>
+              </div>
+              <div className="flex justify-between text-gray-500">
+                <span>배송비</span>
+                <span>3,000원</span>
+              </div>
+              <div className="h-px bg-gray-100 my-4"></div>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-lg text-gray-900">최종 결제 금액</span>
+                <span className="font-black text-3xl text-red-600">{finalPrice.toLocaleString()}원</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-8">
+              <label className="text-sm font-bold text-gray-700 block mb-2">결제 수단 선택</label>
+              
+              <label className={`group relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${paymentType === "KAKAO_PAY" ? "border-yellow-400 bg-yellow-50 ring-1 ring-yellow-400 shadow-sm" : "border-gray-200 hover:border-gray-400 hover:bg-gray-50"}`}>
+                <input type="radio" name="pay" checked={paymentType === "KAKAO_PAY"} onChange={() => setPaymentType("KAKAO_PAY")} className="hidden" />
+                <img src={KAKAO_PAY_LOGO} className="h-6 w-auto mr-3" alt="Kakao" />
+                <span className="font-bold text-gray-800">카카오페이</span>
+                {paymentType === "KAKAO_PAY" && <div className="absolute right-4 w-2 h-2 bg-yellow-500 rounded-full"></div>}
+              </label>
+
+              <label className={`group relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${paymentType === "NAVER_PAY" ? "border-[#03C75A] bg-[#03C75A]/5 ring-1 ring-[#03C75A] shadow-sm" : "border-gray-200 hover:border-gray-400 hover:bg-gray-50"}`}>
+                <input type="radio" name="pay" checked={paymentType === "NAVER_PAY"} onChange={() => setPaymentType("NAVER_PAY")} className="hidden" />
+                <img src={NAVER_PAY_LOGO} className="h-6 w-auto mr-3" alt="Naver" />
+                <span className="font-bold text-gray-800">네이버페이</span>
+                {paymentType === "NAVER_PAY" && <div className="absolute right-4 w-2 h-2 bg-[#03C75A] rounded-full"></div>}
+              </label>
+
+              {/* [토스페이 버튼] */}
+              <label className={`group relative flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-200 ${paymentType === "TOSS_PAY" ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500 shadow-sm" : "border-gray-200 hover:border-gray-400 hover:bg-gray-50"}`}>
+                <input type="radio" name="pay" checked={paymentType === "TOSS_PAY"} onChange={() => setPaymentType("TOSS_PAY")} className="hidden" />
+                <img src={TOSS_PAY_LOGO} className="h-6 w-auto mr-3 object-contain" alt="Toss" />
+                <span className="font-bold text-gray-800">토스페이</span>
+                {paymentType === "TOSS_PAY" && <div className="absolute right-4 w-2 h-2 bg-blue-500 rounded-full"></div>}
+              </label>
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={loading}
+              className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl text-lg hover:bg-black transition-all shadow-md active:scale-[0.98] disabled:bg-gray-300 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>처리 중...</span>
+                </div>
+              ) : (
+                "결제하기"
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 다음 주소 찾기 모달 */}
       {showPostcode && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden relative shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-              <span className="font-bold">주소 찾기</span>
-              <button onClick={() => setShowPostcode(false)} className="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+              <span className="font-bold text-lg text-gray-900">주소 검색</span>
+              <button onClick={() => setShowPostcode(false)} className="text-gray-400 hover:text-black transition-colors p-1">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
             </div>
-            <DaumPostcode 
-              onComplete={(data: any) => { 
-                setNewAddress({...newAddress, zipCode: data.zonecode, roadAddress: data.roadAddress}); 
-                setShowPostcode(false); 
-              }} 
-            />
+            <div className="h-[450px]">
+              <DaumPostcode 
+                onComplete={(data: any) => {
+                  setNewAddress(prev => ({ ...prev, zipCode: data.zonecode, roadAddress: data.roadAddress }));
+                  setShowPostcode(false);
+                }}
+                style={{ height: "100%" }}
+              />
+            </div>
           </div>
         </div>
       )}
