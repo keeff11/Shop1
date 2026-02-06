@@ -67,6 +67,13 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.success("상품이 성공적으로 삭제되었습니다."));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getAllItemsForTest() {
+        // Service의 @Cacheable 붙은 메서드를 직접 호출
+        List<ItemSummaryDTO> items = itemService.getAllItems();
+        return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
     /**
      *
      * 내가 등록한 상품 목록 조회

@@ -9,9 +9,11 @@ import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
+import org.springframework.cache.annotation.Cacheable;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -36,8 +38,11 @@ public class ItemService {
     private static final String DEFAULT_IMAGE = "/no_image.jpg";
 
     /**
+     *
      * 상품 등록
+     *
      */
+    @CacheEvict(value = "items", key = "'all'")
     public Long createItem(CreateItemRequestDTO createItemRequestDTO,
                            List<MultipartFile> images,
                            Long sellerId) {
@@ -56,8 +61,11 @@ public class ItemService {
     }
 
     /**
+     *
      * 상품 수정
+     *
      */
+    @CacheEvict(value = "items", key = "'all'")
     public Long updateItem(Long itemId, UpdateItemRequestDTO request, List<MultipartFile> newImages, Long sellerId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
@@ -89,10 +97,11 @@ public class ItemService {
     }
 
     /**
-     * [핵심 수정] 상품 논리적 삭제 (Soft Delete)
-     * - DB에서 데이터를 지우지 않고 상태만 'DELETED'로 변경
-     * - 외래키(주문 내역 등) 제약 조건 에러 해결
+     *
+     * 상품 삭제
+     *
      */
+    @CacheEvict(value = "items", key = "'all'")
     public void deleteItem(Long itemId, Long currentUserId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
@@ -104,16 +113,6 @@ public class ItemService {
 
         // 상태를 '삭제됨'으로 변경 (Soft Delete)
         item.setStatus(ItemStatus.DELETED);
-
-        // (선택 사항) 재고를 0으로 처리하거나, 이미지 삭제 로직 등은 정책에 따라 결정
-        // 여기서는 데이터 보존을 위해 이미지 삭제 로직은 주석 처리하거나 제거하는 것이 안전할 수 있습니다.
-        // 하지만 용량 확보가 중요하다면 아래 코드를 유지하세요.
-        /*
-        if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().equals(DEFAULT_IMAGE)) {
-            s3Service.deleteImageByUrl(item.getThumbnailUrl());
-        }
-        item.getImages().forEach(img -> s3Service.deleteImageByUrl(img.getImageUrl()));
-        */
 
         log.info("상품 논리 삭제 완료 (ID: {})", itemId);
     }
@@ -160,9 +159,10 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "items", key = "'all'")
     public List<ItemSummaryDTO> getAllItems() {
         return itemRepository.findAllWithImages().stream()
-                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
+                .filter(item -> item.getStatus() != ItemStatus.DELETED)
                 .map(ItemSummaryDTO::from)
                 .toList();
     }

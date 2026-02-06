@@ -2,6 +2,7 @@
 .DS_Store
 Thumbs.db
 mysql_data/
+.env
 
 # [IDE Settings]
 .idea/
