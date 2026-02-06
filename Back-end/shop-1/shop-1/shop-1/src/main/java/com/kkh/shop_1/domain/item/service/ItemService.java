@@ -116,7 +116,7 @@ public class ItemService {
     /**
      * 상품 상세 조회
      */
-    @Transactional(readOnly = true)
+    @Transactional
     @Cacheable(value = "item:detail", key = "#itemId")
     public ItemDetailDTO getItemDetail(Long itemId) {
         // 주의: 조회수 증가는 DB 쓰기 작업이므로, 캐시가 적용되면 조회수가 안 오를 수 있습니다.
