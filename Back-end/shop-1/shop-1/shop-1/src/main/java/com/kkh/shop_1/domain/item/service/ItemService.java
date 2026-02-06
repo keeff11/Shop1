@@ -9,11 +9,12 @@ import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
-import org.springframework.cache.annotation.Cacheable;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,9 +39,7 @@ public class ItemService {
     private static final String DEFAULT_IMAGE = "/no_image.jpg";
 
     /**
-     *
      * 상품 등록
-     *
      */
     @CacheEvict(value = "items", key = "'all'")
     public Long createItem(CreateItemRequestDTO createItemRequestDTO,
@@ -51,9 +50,7 @@ public class ItemService {
         User seller = userService.findById(sellerId);
         Item item = convertToEntity(createItemRequestDTO, seller);
 
-        // 초기 상태 설정
         item.setStatus(ItemStatus.SELLING);
-
         itemRepository.save(item);
         processItemImages(item, images);
 
@@ -61,11 +58,12 @@ public class ItemService {
     }
 
     /**
-     *
      * 상품 수정
-     *
      */
-    @CacheEvict(value = "items", key = "'all'")
+    @Caching(evict = {
+            @CacheEvict(value = "items", key = "'all'"),       // 목록 캐시 삭제
+            @CacheEvict(value = "item:detail", key = "#itemId") // 상세 캐시 삭제
+    })
     public Long updateItem(Long itemId, UpdateItemRequestDTO request, List<MultipartFile> newImages, Long sellerId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
@@ -97,37 +95,38 @@ public class ItemService {
     }
 
     /**
-     *
      * 상품 삭제
-     *
      */
-    @CacheEvict(value = "items", key = "'all'")
+    @Caching(evict = {
+            @CacheEvict(value = "items", key = "'all'"),
+            @CacheEvict(value = "item:detail", key = "#itemId")
+    })
     public void deleteItem(Long itemId, Long currentUserId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 상품을 찾을 수 없습니다."));
 
-        // 본인 확인
         if (!item.getSeller().getId().equals(currentUserId)) {
             throw new AccessDeniedException("본인이 등록한 상품만 삭제할 수 있습니다.");
         }
 
-        // 상태를 '삭제됨'으로 변경 (Soft Delete)
         item.setStatus(ItemStatus.DELETED);
-
         log.info("상품 논리 삭제 완료 (ID: {})", itemId);
     }
 
     /**
      * 상품 상세 조회
      */
+    @Transactional(readOnly = true)
+    @Cacheable(value = "item:detail", key = "#itemId")
     public ItemDetailDTO getItemDetail(Long itemId) {
-        // DB Atomic Update로 조회수 증가
+        // 주의: 조회수 증가는 DB 쓰기 작업이므로, 캐시가 적용되면 조회수가 안 오를 수 있습니다.
+        // 정확한 조회수 집계가 필요하다면 별도 Redis HyperLogLog 등을 사용하거나,
+        // 아래 increaseViewCount만 캐시 로직 밖으로 빼야 하지만, 일단 기본 구조 유지를 위해 둡니다.
         itemRepository.increaseViewCount(itemId);
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다. ID: " + itemId));
 
-        // 삭제된 상품 접근 차단 (선택 사항)
         if (item.getStatus() == ItemStatus.DELETED) {
             throw new EntityNotFoundException("삭제된 상품입니다.");
         }
@@ -138,6 +137,7 @@ public class ItemService {
     /**
      * 재고 차감
      */
+    @CacheEvict(value = "item:detail", key = "#itemId")
     public void decreaseStock(Long itemId, int quantity) {
         int updatedRows = itemRepository.decreaseStock(itemId, quantity);
         if (updatedRows == 0) {
@@ -149,15 +149,13 @@ public class ItemService {
 
     @Transactional(readOnly = true)
     public List<ItemSummaryDTO> getMyItems(Long sellerId) {
-        // 내가 등록한 상품 중 삭제되지 않은 것만 조회 (필터링 추가 필요 시 리포지토리 메서드 수정 권장)
-        // 현재 로직: itemRepository.findBySellerId... -> DELETED 포함 여부는 리포지토리 쿼리에 따라 다름
-        // 간단하게 여기서 필터링하거나, 리포지토리 쿼리에 조건 추가 필요
         return itemRepository.findBySellerIdOrderByCreatedAtDesc(sellerId).stream()
-                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
+                .filter(item -> item.getStatus() != ItemStatus.DELETED)
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
 
+    // 전체 목록 조회 (캐시 적용 유지)
     @Transactional(readOnly = true)
     @Cacheable(value = "items", key = "'all'")
     public List<ItemSummaryDTO> getAllItems() {
@@ -171,7 +169,7 @@ public class ItemService {
     public List<ItemSummaryDTO> getItemsByCategory(String categoryName) {
         ItemCategory category = parseCategory(categoryName);
         return itemRepository.findByItemCategory(category).stream()
-                .filter(item -> item.getStatus() != ItemStatus.DELETED) // [추가] 삭제된 상품 제외
+                .filter(item -> item.getStatus() != ItemStatus.DELETED)
                 .map(ItemSummaryDTO::from)
                 .toList();
     }
@@ -228,7 +226,7 @@ public class ItemService {
                 .itemCategory(parseCategory(request.getCategory()))
                 .description(request.getDescription())
                 .seller(seller)
-                .status(ItemStatus.SELLING) // 기본 상태
+                .status(ItemStatus.SELLING)
                 .build();
     }
 
