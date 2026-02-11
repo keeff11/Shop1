@@ -1,0 +1,142 @@
+[
+  {
+    "name": "iPhone 15 Pro",
+    "category": "ELECTRONICS",
+    "price": 1550000,
+    "description": "티타늄 디자인과 A17 Pro 칩. 역대 가장 강력한 아이폰.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/smartphones/iPhone%2013%20Pro/thumbnail.png"
+  },
+  {
+    "name": "Samsung Galaxy S24 Ultra",
+    "category": "ELECTRONICS",
+    "price": 1690000,
+    "description": "AI 기능이 탑재된 최고의 안드로이드 스마트폰.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/smartphones/Galaxy%20S24%20Ultra/thumbnail.png"
+  },
+  {
+    "name": "MacBook Pro 14",
+    "category": "ELECTRONICS",
+    "price": 2490000,
+    "description": "M3 칩 탑재. 전문가를 위한 최고의 퍼포먼스.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/laptops/Apple%20MacBook%20Pro%2014%20Inch%20Space%20Grey/thumbnail.png"
+  },
+  {
+    "name": "Sony 노이즈캔슬링 헤드폰",
+    "category": "ELECTRONICS",
+    "price": 450000,
+    "description": "업계 최고 수준의 노이즈 캔슬링과 프리미엄 사운드.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/mobile-accessories/Beats%20Studio3%20Wireless/thumbnail.png"
+  },
+  {
+    "name": "iPad Air 5세대",
+    "category": "ELECTRONICS",
+    "price": 920000,
+    "description": "가볍지만 강력합니다. M1 칩 탑재 태블릿.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/tablets/iPad%20Mini%202021%20Starlight/thumbnail.png"
+  },
+  {
+    "name": "샤넬 No.5 향수",
+    "category": "BEAUTY",
+    "price": 245000,
+    "description": "시간을 초월한 클래식. 여성스러움의 상징.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/fragrances/Chanel%20Coco%20Noir%20Eau%20De/thumbnail.png"
+  },
+  {
+    "name": "디올 자도르 오 드 퍼퓸",
+    "category": "BEAUTY",
+    "price": 198000,
+    "description": "플로럴 부케의 풍성하고 신비로운 향기.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/fragrances/Dior%20J'adore/thumbnail.png"
+  },
+  {
+    "name": "에스티로더 갈색병 세럼",
+    "category": "BEAUTY",
+    "price": 155000,
+    "description": "피부의 밤을 깨우는 안티에이징의 기적.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/beauty/Essence%20Mascara%20Lash%20Princess/thumbnail.png"
+  },
+  {
+    "name": "맥(MAC) 매트 립스틱",
+    "category": "BEAUTY",
+    "price": 38000,
+    "description": "선명한 발색과 부드러운 발림성의 정석.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/beauty/Red%20Lipstick/thumbnail.png"
+  },
+  {
+    "name": "나이키 에어 조던 1",
+    "category": "CLOTHING",
+    "price": 189000,
+    "description": "스트릿 패션의 아이콘. 전설적인 디자인.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/mens-shoes/Nike%20Air%20Jordan%201%20Red%20And%20Black/thumbnail.png"
+  },
+  {
+    "name": "캐주얼 체크 셔츠",
+    "category": "CLOTHING",
+    "price": 49000,
+    "description": "어디에나 잘 어울리는 베이직 아이템.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/mens-shirts/Blue%20&%20Black%20Check%20Shirt/thumbnail.png"
+  },
+  {
+    "name": "여성용 플로럴 원피스",
+    "category": "CLOTHING",
+    "price": 69000,
+    "description": "봄 분위기 물씬 풍기는 화사한 패턴.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/womens-dresses/Dress%20Peasant/thumbnail.png"
+  },
+  {
+    "name": "스포츠 러닝화",
+    "category": "CLOTHING",
+    "price": 89000,
+    "description": "가볍고 편안한 착화감. 운동할 때 필수.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/mens-shoes/Sports%20Sneakers%20Off%20White%20&%20Red/thumbnail.png"
+  },
+  {
+    "name": "고급 원목 침대",
+    "category": "HOME",
+    "price": 850000,
+    "description": "내구성이 뛰어난 천연 원목 프레임.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/furniture/Annibale%20Colombo%20Bed/thumbnail.png"
+  },
+  {
+    "name": "3인용 패브릭 소파",
+    "category": "HOME",
+    "price": 450000,
+    "description": "거실을 아늑하게 만들어주는 모던 디자인.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/furniture/Annibale%20Colombo%20Sofa/thumbnail.png"
+  },
+  {
+    "name": "인테리어 화분 세트",
+    "category": "HOME",
+    "price": 35000,
+    "description": "집안 곳곳에 생기를 불어넣는 플랜테리어.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/home-decoration/Plant%20Pot/thumbnail.png"
+  },
+  {
+    "name": "모던 벽걸이 액자",
+    "category": "HOME",
+    "price": 28000,
+    "description": "심심한 벽면을 갤러리처럼 꾸며보세요.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/home-decoration/Family%20Photos/thumbnail.png"
+  },
+  {
+    "name": "해리포터와 마법사의 돌",
+    "category": "BOOKS",
+    "price": 15000,
+    "description": "전 세계가 사랑한 판타지 걸작.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/womens-bags/Prada%20Women%20Bag/thumbnail.png"
+  },
+  {
+    "name": "자바 프로그래밍 입문",
+    "category": "BOOKS",
+    "price": 32000,
+    "description": "개발자가 되기 위한 첫걸음.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/sunglasses/Sun%20Glasses/thumbnail.png"
+  },
+  {
+    "name": "돈의 속성",
+    "category": "BOOKS",
+    "price": 17800,
+    "description": "부자가 되기 위해 꼭 읽어야 할 필독서.",
+    "imageUrl": "https://cdn.dummyjson.com/products/images/mobile-accessories/Apple%20Airpods/thumbnail.png"
+  }
+]

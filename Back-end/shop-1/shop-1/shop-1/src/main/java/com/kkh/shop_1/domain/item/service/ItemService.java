@@ -119,9 +119,7 @@ public class ItemService {
     @Transactional
     @Cacheable(value = "item:detail", key = "#itemId")
     public ItemDetailDTO getItemDetail(Long itemId) {
-        // 주의: 조회수 증가는 DB 쓰기 작업이므로, 캐시가 적용되면 조회수가 안 오를 수 있습니다.
-        // 정확한 조회수 집계가 필요하다면 별도 Redis HyperLogLog 등을 사용하거나,
-        // 아래 increaseViewCount만 캐시 로직 밖으로 빼야 하지만, 일단 기본 구조 유지를 위해 둡니다.
+
         itemRepository.increaseViewCount(itemId);
 
         Item item = itemRepository.findById(itemId)

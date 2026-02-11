@@ -38,6 +38,7 @@ public class SecurityConfig {
     private static final String[] WHITELIST = {
             "/auth/**",        // 로그인, 회원가입, 토큰 재발급 등
             "/items/**",       // 상품 목록 조회 (누구나 볼 수 있음)
+            "/reviews/items/**",
             "/error",
             "/favicon.ico"
     };

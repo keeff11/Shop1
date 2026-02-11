@@ -43,7 +43,6 @@ public class ItemDetailDTO {
                 .stockStatus(item.getStockStatus().name())
                 .status(item.getStatus().name())
 
-                // [중요] 여기서 sellerId를 반드시 매핑해야 합니다.
                 .sellerId(item.getSeller().getId())
 
                 .sellerNickname(item.getSeller().getNickname())
