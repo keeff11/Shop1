@@ -20,6 +20,12 @@ jobs:
           script: |
             cd ~/shop1
             git pull origin main
+            
             echo "${{ secrets.ENV_FILE }}" > .env
-            sudo docker compose down
+            
+            echo "${{ secrets.APPLICATION_PROPERTIES }}" > Back-end/shop-1/shop-1/shop-1/src/main/resources/application.properties
+            
+            sudo docker compose down -v
             sudo docker compose up -d --build
+
+            sudo docker image prune -f
