@@ -4,6 +4,7 @@ import com.kkh.shop_1.domain.coupon.dto.CouponCreateRequest;
 import com.kkh.shop_1.domain.coupon.dto.CouponResponse;
 import com.kkh.shop_1.domain.coupon.entity.Coupon;
 import com.kkh.shop_1.domain.coupon.entity.CouponType;
+import com.kkh.shop_1.domain.coupon.entity.UserCoupon;
 import com.kkh.shop_1.domain.coupon.repository.CouponRepository;
 import com.kkh.shop_1.domain.coupon.repository.UserCouponRepository;
 import com.kkh.shop_1.domain.item.entity.Item;
@@ -63,8 +64,10 @@ public class CouponService {
                 .couponType(req.getCouponType())
                 .category(req.getCategory())
                 .targetItem(targetItem)
-                .createdBy(user)
+                .createdBy(user) // 위에서 찾은 user
                 .expiredAt(req.getExpiredAt())
+                .totalQuantity(req.getTotalQuantity())
+                .issuedQuantity(0)
                 .build();
 
         couponRepository.save(coupon);
@@ -104,6 +107,33 @@ public class CouponService {
     public Coupon getCouponById(Long couponId) {
         return couponRepository.findById(couponId)
                 .orElseThrow(() -> new RuntimeException("쿠폰을 찾을 수 없습니다. ID: " + couponId));
+    }
+
+    /**
+     * 🚀 [포트폴리오 핵심 로직] 선착순 쿠폰 발급 (비관적 락 적용)
+     */
+    public void issueCoupon(Long userId, Long couponId) {
+        // 1. 비관적 락을 걸고 쿠폰 조회 (다른 스레드는 대기함)
+        Coupon coupon = couponRepository.findByIdWithPessimisticLock(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."));
+
+        // 2. 이미 발급받은 쿠폰인지 확인 (중복 발급 방지)
+        if (userCouponRepository.existsByUser_IdAndCoupon_Id(userId, couponId)) {
+            throw new IllegalStateException("이미 발급받은 쿠폰입니다.");
+        }
+
+        // 3. 발급 처리 (수량 검증 및 증가)
+        coupon.issue();
+
+        // 4. 유저 쿠폰 매핑 정보 저장
+        User user = userService.findById(userId);
+        UserCoupon userCoupon = UserCoupon.builder()
+                .user(user)
+                .coupon(coupon)
+                .used(false)
+                .build();
+
+        userCouponRepository.save(userCoupon);
     }
 
 

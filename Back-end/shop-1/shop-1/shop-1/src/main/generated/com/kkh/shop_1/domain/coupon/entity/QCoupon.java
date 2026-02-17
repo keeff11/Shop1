@@ -36,9 +36,13 @@ public class QCoupon extends EntityPathBase<Coupon> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final NumberPath<Integer> issuedQuantity = createNumber("issuedQuantity", Integer.class);
+
     public final StringPath name = createString("name");
 
     public final com.kkh.shop_1.domain.item.entity.QItem targetItem;
+
+    public final NumberPath<Integer> totalQuantity = createNumber("totalQuantity", Integer.class);
 
     public QCoupon(String variable) {
         this(Coupon.class, forVariable(variable), INITS);

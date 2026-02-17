@@ -24,5 +24,6 @@ public class CouponCreateRequest {
     private ItemCategory category; // CATEGORY
     private Long itemId;           // TARGET
 
+    private int totalQuantity;
     private LocalDateTime expiredAt;
 }
