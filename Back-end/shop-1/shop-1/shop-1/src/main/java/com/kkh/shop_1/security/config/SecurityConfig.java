@@ -73,7 +73,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // 유연한 CORS 설정 적용
-        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

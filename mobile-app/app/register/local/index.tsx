@@ -1,422 +1,252 @@
-import axios from "axios";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
-// 모바일용 다음 우편번호 컴포넌트
-import Postcode from "@actbase/react-daum-postcode";
-
-// ✅ [추가 1] AuthContext 가져오기
-import { useAuth } from "../../../contexts/AuthContext";
-
-// 환경 변수 불러오기
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+  Alert,
+  KeyboardAvoidingView, Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View
+} from 'react-native';
+import { fetchApi } from '../../../lib/api';
 
 export default function RegisterLocalScreen() {
   const router = useRouter();
-  
-  // ✅ [추가 2] login 함수 가져오기 (전역 상태 업데이트용)
-  const { login } = useAuth();
 
-  // ===== 입력 상태 관리 =====
+  // ===== 계정 정보 =====
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [role, setRole] = useState("CUSTOMER");
 
-  // ===== 주소 상태 관리 =====
+  // ===== 상태 관리 =====
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [isPasswordSafe, setIsPasswordSafe] = useState(false);
+  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
+  const [emailCode, setEmailCode] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+
+  // ===== 주소 정보 =====
   const [zipCode, setZipCode] = useState("");
   const [roadAddress, setRoadAddress] = useState("");
   const [detailAddress, setDetailAddress] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
-  
-  const [isPostcodeModalVisible, setPostcodeModalVisible] = useState(false);
 
-  // 회원가입 핸들러
+  // 🔐 비밀번호 유효성 및 일치 검사
+  useEffect(() => {
+    if (!password) {
+      setPasswordMessage("");
+      setIsPasswordSafe(false);
+    } else {
+      const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,20}$/;
+      if (!passwordRegex.test(password)) {
+        setPasswordMessage("영문, 숫자, 특수문자(!@#$%^&*) 포함 8자 이상");
+        setIsPasswordSafe(false);
+      } else {
+        setPasswordMessage("안전한 비밀번호입니다.");
+        setIsPasswordSafe(true);
+      }
+    }
+    setIsPasswordMatch(password !== "" && password === confirmPassword);
+  }, [password, confirmPassword]);
+
+  const isFormFilled = 
+    email.trim() !== "" && password !== "" && confirmPassword !== "" && 
+    nickname.trim() !== "" && zipCode !== "" && roadAddress !== "" && 
+    detailAddress.trim() !== "" && recipientName.trim() !== "" && recipientPhone.trim() !== "";
+
+  const isFormValid = isFormFilled && isPasswordSafe && isPasswordMatch && isEmailVerified && isNicknameChecked;
+
+  // 📧 이메일 핸들러
+  const sendVerificationCode = async () => {
+    if (!email) return Alert.alert("알림", "이메일을 입력해주세요.");
+    try {
+      await fetchApi(`/auth/email/send-code?email=${encodeURIComponent(email)}`, { method: "POST" });
+      setIsCodeSent(true);
+      Alert.alert("성공", "인증 번호가 발송되었습니다.");
+    } catch (error: any) {
+      Alert.alert("발송 실패", error.message || "오류가 발생했습니다.");
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    if (!emailCode) return Alert.alert("알림", "인증번호를 입력해주세요.");
+    try {
+      const res = await fetchApi<any>(`/auth/email/verify-code?email=${encodeURIComponent(email)}&code=${encodeURIComponent(emailCode)}`, { method: "POST" });
+      if (res.data === true) {
+        setIsEmailVerified(true);
+        Alert.alert("성공", "이메일 인증 완료");
+      } else {
+        Alert.alert("실패", "인증 번호가 일치하지 않습니다.");
+      }
+    } catch (error) {
+      Alert.alert("오류", "인증 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 🏷️ 닉네임 핸들러
+  const checkNickname = async () => {
+    if (!nickname) return Alert.alert("알림", "닉네임을 입력해주세요.");
+    try {
+      const res = await fetchApi<any>(`/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+      if (res.data === false) {
+        setIsNicknameChecked(true);
+        Alert.alert("성공", "사용 가능한 닉네임입니다.");
+      } else {
+        Alert.alert("실패", "이미 사용 중인 닉네임입니다.");
+      }
+    } catch (error) {
+      Alert.alert("오류", "중복 확인 중 오류 발생");
+    }
+  };
+
+  /** 회원가입 제출 */
   const handleSubmit = async () => {
-    // 1. 유효성 검사
-    if (!email.trim() || !password.trim() || !nickname.trim()) {
-      Alert.alert("알림", "기본 정보를 모두 입력해주세요.");
-      return;
+    if (!isFormValid) {
+      return Alert.alert("알림", "모든 필수 항목을 입력하고 인증을 완료해주세요.");
     }
-    if (!zipCode || !roadAddress || !detailAddress) {
-      Alert.alert("알림", "주소를 모두 입력해주세요.");
-      return;
-    }
-    if (!API_URL) {
-      Alert.alert("오류", "API URL 환경변수가 설정되지 않았습니다.");
-      return;
-    }
+
+    const formData = {
+      email, password, nickname, userRole: role,
+      zipCode, roadAddress, detailAddress, recipientName, recipientPhone,
+    };
 
     try {
-      // 2. 서버 요청
-      const response = await axios.post(
-        `${API_URL}/auth/local/sign-up`,
-        {
-          email,
-          password,
-          nickname,
-          userRole: role,
-          zipCode,
-          roadAddress,
-          detailAddress,
-          recipientName,
-          recipientPhone,
-        }
-      );
+      await fetchApi("/auth/local/sign-up", {
+        method: "POST",
+        body: JSON.stringify(formData),
+      });
 
-      // ============================================================
-      // ✅ [추가 3] 회원가입 성공 후, 받은 토큰으로 바로 로그인 처리
-      // ============================================================
-      // 백엔드에서 ApiResponse.success(tokenDto) 형태로 줍니다.
-      // response.data 구조: { status: "SUCCESS", data: { accessToken: "...", ... } }
-      const tokenDto = response.data.data; 
-
-      if (tokenDto && tokenDto.accessToken) {
-        // 토큰 앞에 "Bearer " 붙여서 로그인 처리 -> 헤더(Header.tsx)가 즉시 바뀜
-        await login("Bearer " + tokenDto.accessToken);
-        
-        Alert.alert("환영합니다!", "회원가입과 동시에 로그인되었습니다.", [
-            { text: "확인", onPress: () => router.replace("/") }, // 홈으로 이동
-        ]);
-      } else {
-        // 혹시라도 토큰이 안 왔다면 로그인 페이지로 이동
-        Alert.alert("가입 성공", "로그인을 진행해주세요.", [
-            { text: "확인", onPress: () => router.replace("/register") }
-        ]);
-      }
-
+      Alert.alert("가입 성공", "성공적으로 가입되었습니다!", [
+        { text: "확인", onPress: () => router.replace('/(tabs)') }
+      ]);
     } catch (error: any) {
-      console.error("회원가입 실패:", error.response?.data || error.message);
-      const errorMessage =
-        error.response?.data?.message || "회원가입 중 오류가 발생했습니다.";
-      Alert.alert("실패", errorMessage);
+      Alert.alert("가입 실패", error.message || "가입 오류 발생");
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>회원가입</Text>
-            <Text style={styles.headerSubtitle}>기본 정보를 입력해주세요</Text>
-          </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <Text style={styles.pageTitle}>Shop1 회원가입</Text>
 
-          {/* === 기본 정보 섹션 === */}
-          <View style={styles.section}>
+          {/* 이메일 */}
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>이메일</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="example@gmail.com"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-
-            <Text style={styles.label}>비밀번호</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="비밀번호 입력"
-              placeholderTextColor="#999"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <Text style={styles.label}>닉네임</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="닉네임 입력"
-              placeholderTextColor="#999"
-              value={nickname}
-              onChangeText={setNickname}
-            />
-
-            <Text style={styles.label}>역할 선택</Text>
-            <View style={styles.roleContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  role === "CUSTOMER" && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole("CUSTOMER")}
-              >
-                <Text
-                  style={[
-                    styles.roleText,
-                    role === "CUSTOMER" && styles.roleTextActive,
-                  ]}
-                >
-                  구매자 (Customer)
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  role === "SELLER" && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole("SELLER")}
-              >
-                <Text
-                  style={[
-                    styles.roleText,
-                    role === "SELLER" && styles.roleTextActive,
-                  ]}
-                >
-                  판매자 (Seller)
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* === 배송지 정보 섹션 === */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>배송지 정보</Text>
-
-            <Text style={styles.label}>주소</Text>
-            <TouchableOpacity
-              onPress={() => setPostcodeModalVisible(true)}
-              style={styles.addressSearchButton}
-            >
-              <Text style={zipCode ? styles.inputText : styles.placeholderText}>
-                {zipCode ? `[${zipCode}] ${roadAddress}` : "주소 검색 (클릭)"}
-              </Text>
-            </TouchableOpacity>
-
-            <TextInput
-              style={styles.input}
-              placeholder="상세 주소 (예: 101동 101호)"
-              placeholderTextColor="#999"
-              value={detailAddress}
-              onChangeText={setDetailAddress}
-            />
-
             <View style={styles.row}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.label}>수령인</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="이름"
-                  placeholderTextColor="#999"
-                  value={recipientName}
-                  onChangeText={setRecipientName}
-                />
+              <TextInput 
+                style={[styles.input, styles.flex1]} 
+                value={email} 
+                onChangeText={(t) => { setEmail(t); setIsEmailVerified(false); setIsCodeSent(false); }} 
+                placeholder="example@gmail.com" 
+                editable={!isEmailVerified}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity style={[styles.actionBtn, isEmailVerified && styles.disabledBtn]} onPress={sendVerificationCode} disabled={isEmailVerified}>
+                <Text style={styles.actionBtnText}>{isEmailVerified ? "인증완료" : (isCodeSent ? "재발송" : "번호전송")}</Text>
+              </TouchableOpacity>
+            </View>
+            {isCodeSent && !isEmailVerified && (
+              <View style={[styles.row, { marginTop: 8 }]}>
+                <TextInput style={[styles.input, styles.flex1]} value={emailCode} onChangeText={setEmailCode} placeholder="인증번호 6자리" keyboardType="number-pad" />
+                <TouchableOpacity style={styles.verifyBtn} onPress={verifyEmailCode}>
+                  <Text style={styles.verifyBtnText}>확인</Text>
+                </TouchableOpacity>
               </View>
-              <View style={{ flex: 1.5 }}>
-                <Text style={styles.label}>연락처</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="010-0000-0000"
-                  placeholderTextColor="#999"
-                  keyboardType="phone-pad"
-                  value={recipientPhone}
-                  onChangeText={setRecipientPhone}
-                />
-              </View>
+            )}
+          </View>
+
+          {/* 비밀번호 */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>비밀번호</Text>
+            <TextInput 
+              style={[styles.input, password.length > 0 && (isPasswordSafe ? styles.inputSuccess : styles.inputError)]} 
+              value={password} onChangeText={setPassword} placeholder="영문, 숫자, 특수문자 포함 8~20자" secureTextEntry 
+            />
+            {password.length > 0 && <Text style={[styles.helperText, isPasswordSafe ? styles.successText : styles.errorText]}>{passwordMessage}</Text>}
+          </View>
+
+          {/* 비밀번호 확인 */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>비밀번호 확인</Text>
+            <TextInput 
+              style={[styles.input, confirmPassword.length > 0 && (isPasswordMatch ? styles.inputSuccess : styles.inputError)]} 
+              value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 재입력" secureTextEntry 
+            />
+            {confirmPassword.length > 0 && <Text style={[styles.helperText, isPasswordMatch ? styles.successText : styles.errorText]}>{isPasswordMatch ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다."}</Text>}
+          </View>
+
+          {/* 닉네임 */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>닉네임</Text>
+            <View style={styles.row}>
+              <TextInput style={[styles.input, styles.flex1]} value={nickname} onChangeText={(t) => { setNickname(t); setIsNicknameChecked(false); }} placeholder="사용할 닉네임" />
+              <TouchableOpacity style={[styles.actionBtn, isNicknameChecked && styles.disabledBtn]} onPress={checkNickname} disabled={isNicknameChecked}>
+                <Text style={styles.actionBtnText}>{isNicknameChecked ? "확인완료" : "중복확인"}</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>회원가입 완료</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* === 우편번호 검색 모달 === */}
-        <Modal
-          visible={isPostcodeModalVisible}
-          animationType="slide"
-          presentationStyle="pageSheet"
-        >
-          <SafeAreaView style={{ flex: 1 }}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>주소 검색</Text>
-              <TouchableOpacity
-                onPress={() => setPostcodeModalVisible(false)}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>닫기</Text>
+          {/* 배송지 정보 */}
+          <View style={styles.inputGroup}>
+            <View style={styles.divider} />
+            <Text style={styles.label}>배송지 정보</Text>
+            <View style={styles.row}>
+              <TextInput style={[styles.input, { flex: 0.4 }]} value={zipCode} onChangeText={setZipCode} placeholder="우편번호" keyboardType="number-pad" />
+              <TouchableOpacity style={styles.darkBtn} onPress={() => Alert.alert("안내", "RN 환경에서는 웹뷰를 통한 주소 검색 연동이 필요합니다. 임시로 직접 입력해주세요.")}>
+                <Text style={styles.darkBtnText}>주소 검색</Text>
               </TouchableOpacity>
             </View>
-            <Postcode
-              style={{ width: "100%", height: "100%" }}
-              jsOptions={{ animation: true }}
-              onSelected={(data) => {
-                setZipCode(String(data.zonecode)); 
-                setRoadAddress(data.address);
-                setPostcodeModalVisible(false);
-              }}
-              onError={(err) => {
-                console.error(err);
-                setPostcodeModalVisible(false);
-              }}
-            />
-          </SafeAreaView>
-        </Modal>
+            <TextInput style={[styles.input, { marginTop: 8 }]} value={roadAddress} onChangeText={setRoadAddress} placeholder="도로명 주소" />
+            <TextInput style={[styles.input, { marginTop: 8 }]} value={detailAddress} onChangeText={setDetailAddress} placeholder="상세 주소를 입력하세요" />
+            <View style={[styles.row, { marginTop: 8 }]}>
+              <TextInput style={[styles.input, styles.flex1]} value={recipientName} onChangeText={setRecipientName} placeholder="수령인 성함" />
+              <TextInput style={[styles.input, styles.flex1]} value={recipientPhone} onChangeText={setRecipientPhone} placeholder="연락처" keyboardType="phone-pad" />
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.submitBtn, !isFormValid && styles.disabledSubmitBtn]} 
+            onPress={handleSubmit} disabled={!isFormValid}
+          >
+            <Text style={styles.submitBtnText}>가입 및 로그인하기</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollContainer: {
-    padding: 24,
-    paddingBottom: 50,
-  },
-  header: {
-    marginBottom: 30,
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#666",
-  },
-  section: {
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
-    color: "#333",
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-    color: "#000",
-  },
-  inputText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: "#999",
-  },
-  roleContainer: {
-    flexDirection: "row",
-    height: 50,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    padding: 4,
-  },
-  roleButton: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  roleButtonActive: {
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  roleText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#999",
-  },
-  roleTextActive: {
-    color: "#3b82f6", 
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#eee",
-    marginVertical: 24,
-  },
-  addressSearchButton: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#3b82f6",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    backgroundColor: "#f0f9ff",
-    marginBottom: 12,
-  },
-  row: {
-    flexDirection: "row",
-  },
-  submitButton: {
-    backgroundColor: "#3b82f6",
-    height: 56,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 30,
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    padding: 8,
-  },
-  closeButtonText: {
-    color: "#3b82f6",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  safeArea: { flex: 1, backgroundColor: '#fff' },
+  scrollContent: { padding: 24, paddingBottom: 60 },
+  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#111', textAlign: 'center', marginBottom: 30 },
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#4b5563', marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, backgroundColor: '#fff' },
+  inputSuccess: { borderColor: '#10b981' },
+  inputError: { borderColor: '#ef4444' },
+  flex1: { flex: 1 },
+  row: { flexDirection: 'row', gap: 8 },
+  actionBtn: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, backgroundColor: '#f9fafb' },
+  actionBtnText: { fontSize: 13, fontWeight: 'bold', color: '#374151' },
+  verifyBtn: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#2563eb' },
+  verifyBtnText: { fontSize: 14, fontWeight: 'bold', color: '#fff' },
+  darkBtn: { flex: 0.6, justifyContent: 'center', alignItems: 'center', borderRadius: 8, backgroundColor: '#1f2937' },
+  darkBtnText: { fontSize: 14, fontWeight: 'bold', color: '#fff' },
+  disabledBtn: { opacity: 0.5 },
+  helperText: { fontSize: 12, marginTop: 4, fontWeight: '500' },
+  successText: { color: '#10b981' },
+  errorText: { color: '#ef4444' },
+  divider: { height: 1, backgroundColor: '#e5e7eb', marginVertical: 16 },
+  submitBtn: { backgroundColor: '#000', paddingVertical: 18, borderRadius: 12, alignItems: 'center', marginTop: 10 },
+  disabledSubmitBtn: { backgroundColor: '#d1d5db' },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
 });

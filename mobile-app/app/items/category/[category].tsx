@@ -1,21 +1,30 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList, Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Dimensions,
+    FlatList, Image,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { fetchApi } from '../../lib/api';
+import { fetchApi } from '../../../lib/api';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - 48) / 2;
+const ITEM_WIDTH = (width - 48) / 2; 
 const DEFAULT_IMAGE_URI = "https://via.placeholder.com/200?text=No+Image";
+
+const CATEGORY_MAP: Record<string, string> = {
+  ELECTRONICS: "전자기기",
+  CLOTHING: "의류",
+  HOME: "가전/생활",
+  BOOKS: "도서",
+  BEAUTY: "뷰티/화장품",
+  OTHERS: "기타",
+};
 
 interface Item {
   id: number; name: string; price: number; discountPrice?: number;
@@ -23,25 +32,30 @@ interface Item {
   averageRating?: number; reviewCount?: number;
 }
 
-interface PageResponse<T> { content: T[]; totalPages: number; totalElements: number; last: boolean; }
-interface ApiResponse<T> { data: T; }
+interface PageResponse<T> { content: T[]; totalElements: number; }
 
-export default function ItemsListScreen() {
+export default function CategoryItemsScreen() {
   const router = useRouter();
+  const { category } = useLocalSearchParams<{ category: string }>();
+
   const [items, setItems] = useState<Item[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchItems = async () => {
+  const fetchCategoryItems = async () => {
+    if (!category) return;
     try {
-      const res = await fetchApi<ApiResponse<PageResponse<Item>>>("/items");
+      const res = await fetchApi<{ data: PageResponse<Item> }>(`/items?category=${category}&page=0&size=20`);
       if (res.data && Array.isArray(res.data.content)) {
         setItems(res.data.content);
+        setTotalCount(res.data.totalElements || res.data.content.length);
       } else {
         setItems([]);
+        setTotalCount(0);
       }
     } catch (err) {
-      console.error("상품 리스트 로드 실패:", err);
+      console.error("카테고리 상품 로드 실패:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -49,12 +63,12 @@ export default function ItemsListScreen() {
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    fetchCategoryItems();
+  }, [category]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchItems();
+    fetchCategoryItems();
   };
 
   const renderItem = ({ item }: { item: Item }) => {
@@ -65,21 +79,14 @@ export default function ItemsListScreen() {
       <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => router.push(`/items/${item.id}`)}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUrl }} style={styles.image} />
-          {isSoldOut && (
-            <View style={styles.soldOutOverlay}>
-              <Text style={styles.soldOutText}>품절</Text>
-            </View>
-          )}
+          {isSoldOut && <View style={styles.soldOutOverlay}><Text style={styles.soldOutText}>품절</Text></View>}
         </View>
         
         <View style={styles.infoContainer}>
           <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
           <View style={styles.priceRow}>
             {item.discountPrice ? (
-              <View style={{flexDirection: 'row', alignItems: 'flex-end', gap: 6}}>
-                <Text style={styles.discountPrice}>{item.discountPrice.toLocaleString()}원</Text>
-                <Text style={styles.originalPrice}>{item.price.toLocaleString()}원</Text>
-              </View>
+              <><Text style={styles.discountPrice}>{item.discountPrice.toLocaleString()}원</Text><Text style={styles.originalPrice}>{item.price.toLocaleString()}원</Text></>
             ) : (
               <Text style={styles.price}>{item.price.toLocaleString()}원</Text>
             )}
@@ -94,12 +101,10 @@ export default function ItemsListScreen() {
     );
   };
 
+  const categoryName = category ? (CATEGORY_MAP[category.toUpperCase()] || category) : "상품 목록";
+
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
+    return <View style={styles.centerContainer}><ActivityIndicator size="large" color="#111" /></View>;
   }
 
   return (
@@ -108,8 +113,12 @@ export default function ItemsListScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#111" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>전체 상품</Text>
+        <Text style={styles.headerTitle}>{categoryName}</Text>
         <View style={{ width: 24 }} />
+      </View>
+
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryText}>총 <Text style={{fontWeight: 'bold', color: '#2563eb'}}>{totalCount}</Text>개의 상품</Text>
       </View>
 
       <FlatList
@@ -124,7 +133,8 @@ export default function ItemsListScreen() {
         onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>등록된 상품이 없습니다.</Text>
+            <Ionicons name="file-tray-outline" size={60} color="#d1d5db" />
+            <Text style={styles.emptyText}>해당 카테고리에 등록된 상품이 없습니다.</Text>
           </View>
         }
       />
@@ -134,11 +144,13 @@ export default function ItemsListScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   backBtn: { padding: 4 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
-  listContent: { padding: 16, paddingBottom: 40 },
+  summaryRow: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  summaryText: { fontSize: 13, color: '#4b5563' },
+  listContent: { padding: 16, paddingBottom: 60 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 20 },
   card: { width: ITEM_WIDTH },
   imageContainer: { width: '100%', aspectRatio: 1, borderRadius: 12, backgroundColor: '#f9fafb', overflow: 'hidden', marginBottom: 10, borderWidth: 1, borderColor: '#f3f4f6' },
@@ -155,5 +167,5 @@ const styles = StyleSheet.create({
   ratingText: { fontSize: 12, fontWeight: 'bold', color: '#4b5563' },
   reviewCount: { fontSize: 12, color: '#9ca3af' },
   emptyContainer: { paddingVertical: 100, alignItems: 'center' },
-  emptyText: { color: '#9ca3af', fontSize: 15 }
+  emptyText: { color: '#9ca3af', fontSize: 15, marginTop: 12 }
 });

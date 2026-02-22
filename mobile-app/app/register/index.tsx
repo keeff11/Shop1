@@ -1,263 +1,196 @@
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView, Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchApi } from '../../lib/api';
 
-// ==================================================================
-// 1. .env에서 환경변수 불러오기
-// (변수명이 틀리면 undefined가 되니 .env 파일과 철자가 같은지 꼭 확인하세요)
-// ==================================================================
-const API_URL = process.env.EXPO_PUBLIC_API_URL; // 예: http://192.168.0.69:8080
-const KAKAO_KEY = process.env.EXPO_PUBLIC_KAKAO_API_KEY;
-const NAVER_ID = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID;
-
-export default function RegisterScreen() {
+export default function RegisterMainScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
 
-  // =========================
-  // 소셜 로그인 핸들러
-  // =========================
+  // 로그인 폼 상태 관리
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const handleKakaoLogin = () => {
-        // 외부 브라우저(Linking) 대신, 앱 내 웹뷰 페이지로 이동합니다.
-        router.push("/register/kakao/callback");
-    };
+  // 1. 이메일 로그인 처리 로직
+  const handleLocalLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('알림', '이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
 
-    const handleNaverLogin = () => {
-        // 네이버도 마찬가지로 앱 내 웹뷰 페이지로 이동합니다.
-        router.push("/register/naver/callback");
-    };
+    setLoading(true);
+    try {
+      // 백엔드의 LoginResponseDTO 형태에 맞게 통신
+      const res = await fetchApi<any>('/auth/local/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
-//   const handleKakaoLogin = async () => {
-//     // 안전장치: 환경변수가 제대로 안 불러와졌으면 경고 띄움
-//     if (!API_URL || !KAKAO_KEY) {
-//       Alert.alert("설정 오류", "환경변수(API URL 또는 카카오 키)가 설정되지 않았습니다.");
-//       console.error("Missing Env Vars:", { API_URL, KAKAO_KEY });
-//       return;
-//     }
+      // 백엔드 응답에서 토큰 추출 (응답 구조에 따라 data.accessToken 등 수정 필요)
+      const token = res.data?.accessToken || res.accessToken || res.data || res;
+      
+      if (token && typeof token === 'string') {
+        // AuthContext의 login 함수를 호출하여 토큰을 저장하고 유저 정보를 불러옴
+        await login(token);
+        
+        // 로그인 성공 시 메인 홈(탭)으로 이동
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('오류', '로그인 토큰을 받아오지 못했습니다.');
+      }
+    } catch (err: any) {
+      console.error('로그인 에러:', err);
+      Alert.alert('로그인 실패', err.message || '이메일 또는 비밀번호가 일치하지 않습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//     const REDIRECT_URI = `${API_URL}/auth/kakao/callback`; 
-    
-//     const kakaoAuthUrl =
-//       `https://kauth.kakao.com/oauth/authorize` +
-//       `?response_type=code` +
-//       `&client_id=${KAKAO_KEY}` +
-//       `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  // 2. 소셜 로그인 처리 로직 (웹뷰 연동 뼈대)
+  const handleKakaoLogin = async () => {
+    // 실제 작동을 위해서는 app.json에 'scheme'을 등록하고 백엔드 리다이렉트 주소를 맞춰야 합니다.
+    // 예: WebBrowser.openAuthSessionAsync('http://백엔드IP:8080/oauth2/authorization/kakao', 'shop1://');
+    Alert.alert('안내', '앱에서 카카오 로그인을 하려면 백엔드 OAuth 리다이렉트 및 앱 딥링크(scheme) 설정이 필요합니다.');
+  };
 
-//     // 모바일 브라우저 열기
-//     await Linking.openURL(kakaoAuthUrl);
-//   };
-
-//   const handleNaverLogin = async () => {
-//     if (!API_URL || !NAVER_ID) {
-//       Alert.alert("설정 오류", "환경변수(API URL 또는 네이버 ID)가 설정되지 않았습니다.");
-//       console.error("Missing Env Vars:", { API_URL, NAVER_ID });
-//       return;
-//     }
-
-//     const REDIRECT_URI = `${API_URL}/auth/naver/callback`;
-//     const STATE = Math.random().toString(36).substring(2, 15);
-
-//     const naverAuthUrl =
-//       `https://nid.naver.com/oauth2.0/authorize` +
-//       `?response_type=code` +
-//       `&client_id=${NAVER_ID}` +
-//       `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-//       `&state=${STATE}`;
-
-//     await Linking.openURL(naverAuthUrl);
-//   };
-
-  const handleLocalLogin = () => {
-    // 로컬 로그인 구현 시에도 API_URL 사용 가능
-    // axios.post(`${API_URL}/auth/login`, { email, password }) ...
-    console.log("로그인 시도:", email, password);
-    console.log("현재 API 주소:", API_URL); // 디버깅용
-    Alert.alert("알림", "로그인 버튼이 눌렸습니다.");
+  const handleNaverLogin = async () => {
+    Alert.alert('안내', '앱에서 네이버 로그인을 하려면 백엔드 OAuth 리다이렉트 및 앱 딥링크(scheme) 설정이 필요합니다.');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.card}>
-            <Text style={styles.title}>shop1</Text>
-            <Text style={styles.subtitle}>로그인 / 회원가입</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.container}>
+          
+          {/* 상단 로고 및 타이틀 영역 */}
+          <View style={styles.headerArea}>
+            <Text style={styles.logoText}>Shop1</Text>
+            <Text style={styles.subtitle}>
+              모든 가치를 한 곳에,{'\n'}가장 트렌디한 쇼핑의 시작
+            </Text>
+          </View>
 
-            {/* 로컬 로그인 폼 */}
-            <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                placeholder="이메일"
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="비밀번호"
-                placeholderTextColor="#999"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity style={styles.loginButton} onPress={handleLocalLogin}>
-                <Text style={styles.loginButtonText}>로그인</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={{ flex: 1 }} />
 
-            {/* 구분선 */}
-            <View style={styles.divider} />
+          {/* 이메일 로그인 입력 영역 (추가된 부분) */}
+          <View style={styles.inputArea}>
+            <TextInput
+              style={styles.input}
+              placeholder="이메일"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="비밀번호"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity 
+              style={[styles.loginBtn, loading && styles.disabledBtn]} 
+              onPress={handleLocalLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.loginBtnText}>로그인</Text>
+              )}
+            </TouchableOpacity>
 
-            {/* 회원가입 & 소셜 로그인 */}
-            <View style={styles.socialContainer}>
-              {/* 로컬 회원가입 */}
-              <TouchableOpacity
-                style={styles.signupButton}
-                onPress={() => router.push("/register/local")}
-              >
-                <Text style={styles.signupButtonText}>Shop1 회원가입</Text>
-              </TouchableOpacity>
-
-              {/* 카카오 로그인 */}
-              <TouchableOpacity onPress={handleKakaoLogin} style={styles.socialButton}>
-                {/* assets 폴더 이미지 경로 확인 필수 */}
-                <Image
-                  source={require("../../assets/kakao_login1.png")} 
-                  style={styles.kakaoImage}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-
-              {/* 네이버 로그인 */}
-              <TouchableOpacity onPress={handleNaverLogin} style={styles.socialButton}>
-                <Image
-                  source={require("../../assets/naver_login1.png")}
-                  style={styles.naverImage}
-                  resizeMode="contain"
-                />
+            <View style={styles.signupRow}>
+              <Text style={styles.signupText}>아직 계정이 없으신가요?</Text>
+              <TouchableOpacity onPress={() => router.push('/register/local')}>
+                <Text style={styles.signupLink}>이메일로 회원가입</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+
+          {/* 소셜 로그인 및 구분선 영역 */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>또는 SNS로 시작하기</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <View style={styles.socialArea}>
+            <TouchableOpacity activeOpacity={0.8} onPress={handleKakaoLogin} style={styles.socialBtn}>
+              <Image source={require('../../assets/kakao_login1.png')} style={styles.socialImage} resizeMode="contain" />
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={handleNaverLogin} style={styles.socialBtn}>
+              <Image source={require('../../assets/naver_login.png')} style={styles.socialImage} resizeMode="contain" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerArea}>
+            <Text style={styles.footerText}>
+              로그인 시 Shop1의 <Text style={styles.linkText}>이용약관</Text> 및 <Text style={styles.linkText}>개인정보처리방침</Text>에 동의하게 됩니다.
+            </Text>
+          </View>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#000",
-  },
-  subtitle: {
-    fontSize: 24,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#333",
-  },
-  form: {
-    gap: 16,
-  },
+  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  container: { flex: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 30 },
+  headerArea: { alignItems: 'center', marginTop: 20 },
+  logoText: { fontSize: 42, fontWeight: '900', color: '#111', marginBottom: 12, letterSpacing: -1 },
+  subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 22 },
+  
+  inputArea: { width: '100%', marginBottom: 30 },
   input: {
-    width: "100%",
-    height: 50,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 6,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: "#fff",
+    paddingVertical: 16,
+    fontSize: 15,
+    backgroundColor: '#f9fafb',
+    marginBottom: 12,
   },
-  loginButton: {
-    width: "100%",
-    height: 50,
-    backgroundColor: "#60a5fa",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 10,
+  loginBtn: {
+    backgroundColor: '#111',
+    paddingVertical: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
   },
-  loginButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e5e7eb",
-    marginVertical: 20,
-  },
-  socialContainer: {
-    gap: 12,
-  },
-  signupButton: {
-    width: "100%",
-    height: 55,
-    backgroundColor: "#3b82f6",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  signupButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  socialButton: {
-    width: "100%",
-    alignItems: "center",
-  },
-  kakaoImage: {
-    width: "100%",
-    height: 50,
-  },
-  naverImage: {
-    width: "100%",
-    height: 50,
-  },
+  disabledBtn: { backgroundColor: '#9ca3af' },
+  loginBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  signupRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16, gap: 6 },
+  signupText: { color: '#6b7280', fontSize: 14 },
+  signupLink: { color: '#2563eb', fontSize: 14, fontWeight: 'bold' },
+
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e5e7eb' },
+  dividerText: { marginHorizontal: 12, fontSize: 13, color: '#9ca3af', fontWeight: '500' },
+
+  socialArea: { width: '100%', gap: 12, marginBottom: 30 },
+  socialBtn: { width: '100%', height: 52, borderRadius: 12, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  socialImage: { width: '100%', height: '100%' },
+  
+  footerArea: { alignItems: 'center', paddingHorizontal: 20 },
+  footerText: { fontSize: 12, color: '#9ca3af', textAlign: 'center', lineHeight: 18 },
+  linkText: { textDecorationLine: 'underline', color: '#6b7280' },
 });
