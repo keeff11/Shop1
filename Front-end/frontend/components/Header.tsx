@@ -29,7 +29,7 @@ interface CartApiResponse {
   data: { quantity: number }[];
 }
 
-// 🌟 [추가] 자동완성 검색결과 데이터 타입
+// 🌟 자동완성 검색결과 데이터 타입
 interface SuggestionItem {
   id: number;
   name: string;
@@ -54,7 +54,7 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
 
-  // 🌟 [추가] 검색 관련 상태 관리
+  // 검색 관련 상태 관리
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -129,7 +129,7 @@ export default function Header() {
     }
   };
 
-  // 🌟 [추가] 외부 클릭 시 검색 드롭다운 닫기
+  // 외부 클릭 시 검색 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -140,7 +140,7 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🌟 [추가] Debounce를 적용한 실시간 자동완성 API 호출 (Elasticsearch 연동)
+  // Debounce를 적용한 실시간 자동완성 API 호출 (Elasticsearch 연동)
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
@@ -167,7 +167,7 @@ export default function Header() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // 🌟 [추가] 엔터키 입력 시 검색 결과 페이지로 이동 (일반 검색)
+  // 엔터키 입력 시 검색 결과 페이지로 이동 (일반 검색)
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -176,7 +176,7 @@ export default function Header() {
     }
   };
 
-  // 🌟 [추가] 자동완성 드롭다운에서 상품 클릭 시 상세 페이지로 이동
+  // 자동완성 드롭다운에서 상품 클릭 시 상세 페이지로 이동
   const handleSuggestionClick = (itemId: number) => {
     setIsDropdownOpen(false);
     setSearchQuery("");
@@ -198,10 +198,10 @@ export default function Header() {
             className="h-10 md:h-14 w-auto hover:scale-105 transition-transform object-contain"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
-          <span className="text-2xl font-black ml-2 hidden lg:inline text-primary">Shop1</span>
+          {/* 텍스트 로고 삭제됨 */}
         </div>
 
-        {/* 🌟 2. 검색창 & 자동완성 영역 (중앙) */}
+        {/* 2. 검색창 & 자동완성 영역 (중앙) */}
         <div className="flex-1 max-w-2xl relative" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <input
@@ -209,7 +209,7 @@ export default function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => { if (suggestions.length > 0) setIsDropdownOpen(true); }}
-              placeholder="상품명 또는 초성(ㄴㅇㅋ) 검색"
+              placeholder="찾으시는 상품을 검색해보세요"
               className="w-full bg-gray-100/80 text-gray-900 text-sm rounded-full pl-5 pr-12 py-2.5 outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all border border-transparent"
             />
             <button
