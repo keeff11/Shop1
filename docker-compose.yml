@@ -10,7 +10,6 @@ services:
       - "3306:3306"
     environment:
       MYSQL_DATABASE: shop1
-
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
     volumes:
@@ -28,24 +27,29 @@ services:
     networks:
       - shop1-network
 
+  # 🌟 3. Elasticsearch (수정됨)
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
     container_name: shop1-elasticsearch
     environment:
-      - discovery.type=single-node # 단일 노드 모드 (클러스터 구성 안함)
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # 메모리 제한
-      - xpack.security.enabled=false     # 보안 해제 (로컬과 동일)
+      - discovery.type=single-node 
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" 
+      - xpack.security.enabled=false     
       - xpack.security.http.ssl.enabled=false
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      # 🌟 중요: 해킹 방지를 위해 127.0.0.1로 로컬에서만 접근 가능하게 제한
+      - "127.0.0.1:9200:9200"
+      - "127.0.0.1:9300:9300"
     command: >
       bash -c "
       bin/elasticsearch-plugin install --batch analysis-nori;
       /usr/local/bin/docker-entrypoint.sh
       "
+    # 🌟 추가: 백엔드와 통신하기 위해 같은 네트워크에 소속시킴
+    networks:
+      - shop1-network
 
-  # 3. 백엔드 (Spring Boot)
+  # 🌟 4. 백엔드 (Spring Boot) (수정됨)
   backend:
     build: ./Back-end/shop-1/shop-1/shop-1
     container_name: shop1-backend
@@ -55,7 +59,11 @@ services:
     depends_on:
       - db
       - redis
+      - elasticsearch # ES가 켜진 후 백엔드가 켜지도록 순서 보장
     environment:
+      # 🌟 추가: Spring Boot에 메모리 다이어트 명령 하달 (OOM Killer 방지)
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      
       # DB 연결 설정
       DB_HOST: shop1-db
       DB_USERNAME: root
@@ -64,6 +72,9 @@ services:
       # Redis 연결 설정
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+
+      # 🌟 추가: ES 연결 주소를 도커 컨테이너 이름으로 명시
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
       
       # CORS 설정
       CORS_ALLOWED_ORIGINS: ${FRONTEND_URL}
@@ -72,7 +83,7 @@ services:
     networks:
       - shop1-network
 
-  # 4. 프론트엔드 (Next.js)
+  # 5. 프론트엔드 (Next.js)
   frontend:
     build: ./Front-end/frontend
     container_name: shop1-frontend
