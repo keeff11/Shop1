@@ -1,3 +1,4 @@
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE } from '../config/api';
 
 class ApiError extends Error {
@@ -16,11 +17,14 @@ async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> 
     headers.set('Content-Type', 'application/json');
   }
 
-  // 모바일 특성상 백엔드에서 쿠키(JSESSIONID 등)를 통한 인증을 사용한다면
-  // 백엔드 CORS 및 RN fetch 설정 점검이 필요합니다.
-  // (JWT 토큰 방식을 쓴다면 이 부분에 AsyncStorage/SecureStore에서 토큰을 꺼내 헤더에 담아야 합니다.)
+  // [핵심 수정] SecureStore에서 토큰을 꺼내서 Bearer 형식으로 자동 추가
+  const token = await SecureStore.getItemAsync('accessToken');
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const response = await fetch(url, {
-    credentials: 'omit', // RN 환경에 맞게 기본값 조정 (필요시 'include' 유지하되 헤더 토큰 권장)
+    credentials: 'omit', 
     ...options,
     headers,
   });

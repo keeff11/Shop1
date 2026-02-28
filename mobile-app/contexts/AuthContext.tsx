@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 앱 켜질 때 토큰 확인
   useEffect(() => {
     loadUser();
   }, []);
@@ -25,26 +24,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
       if (token) {
-        // [수정 완료] /api 제거됨 -> http://IP:8080/auth/me
+        // [수정됨] 토큰 앞에 'Bearer '를 붙여서 백엔드 형식에 맞춤
         const res = await axios.get(`${API_BASE}/auth/me`, {
-          headers: { Authorization: token },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data.data);
       }
     } catch (e) {
-      // 토큰이 만료되었거나 서버 오류 시 로그아웃 처리
       console.log("자동 로그인 실패 (토큰 만료 등):", e);
       setUser(null);
-      await SecureStore.deleteItemAsync("accessToken"); // 잘못된 토큰 삭제
+      await SecureStore.deleteItemAsync("accessToken"); 
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (token: string) => {
-    // 1. 토큰 저장
     await SecureStore.setItemAsync("accessToken", token);
-    // 2. 내 정보 갱신 (헤더 업데이트 효과)
     await loadUser(); 
   };
 

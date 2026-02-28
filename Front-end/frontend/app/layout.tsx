@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-import { Toaster } from "react-hot-toast"; // ★ 임포트 확인
+import RecentSidebar from "@/components/RecentSidebar";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,7 @@ export default function RootLayout({
           position="top-center" 
           containerStyle={{
             top: 40,
-            zIndex: 99999, // ★ 헤더에 가려지지 않도록 최상단 설정
+            zIndex: 99999,
           }}
           toastOptions={{
             duration: 3000,
@@ -61,6 +62,7 @@ export default function RootLayout({
         
         <Header />
         <main>{children}</main>
+        <RecentSidebar />
       </body>
     </html>
   );

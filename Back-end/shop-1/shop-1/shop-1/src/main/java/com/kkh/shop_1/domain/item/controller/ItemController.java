@@ -2,6 +2,7 @@ package com.kkh.shop_1.domain.item.controller;
 
 import com.kkh.shop_1.common.ApiResponse;
 import com.kkh.shop_1.domain.item.dto.*;
+import com.kkh.shop_1.domain.item.service.ItemSearchService;
 import com.kkh.shop_1.domain.item.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,7 @@ import java.util.List;
 public class ItemController {
 
     private final ItemService itemService;
+    private final ItemSearchService itemSearchService;
 
     /**
      *
@@ -122,6 +125,55 @@ public class ItemController {
     public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getItemsByCategory(@PathVariable String category) {
         List<ItemSummaryDTO> items = itemService.getItemsByCategory(category);
         return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
+    @GetMapping("/ranking")
+    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getPopularItems() {
+        List<ItemSummaryDTO> popularItems = itemService.getPopularItems();
+        return ResponseEntity.ok(ApiResponse.success(popularItems));
+    }
+
+    /**
+     * 🌟 [추가] 최근 본 상품 기록하기 (가벼운 비동기 호출용)
+     */
+    @PostMapping("/{itemId}/recent")
+    public ResponseEntity<ApiResponse<Void>> addRecentItem(
+            @PathVariable Long itemId,
+            @RequestHeader(value = "Viewer-Id", required = false) String viewerId) {
+
+        if (viewerId == null || viewerId.isEmpty()) return ResponseEntity.ok().build();
+
+        itemService.addRecentItem(viewerId, itemId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    /**
+     * 🌟 [추가] 최근 본 상품 목록 조회
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getRecentItems(
+            @RequestHeader(value = "Viewer-Id", required = false) String viewerId) {
+
+        if (viewerId == null || viewerId.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success(Collections.emptyList()));
+        }
+
+        List<ItemSummaryDTO> recentItems = itemService.getRecentItems(viewerId);
+        return ResponseEntity.ok(ApiResponse.success(recentItems));
+    }
+
+    // 🌟 실시간 검색어 자동완성 API
+    @GetMapping("/search/autocomplete")
+    public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> autocomplete(@RequestParam String keyword) {
+        List<ItemSummaryDTO> suggestions = itemSearchService.getAutocompleteSuggestions(keyword);
+        return ResponseEntity.ok(ApiResponse.success(suggestions));
+    }
+
+    // 🌟 (관리자용) MySQL -> ES 데이터 동기화 트리거
+    @PostMapping("/search/sync")
+    public ResponseEntity<ApiResponse<String>> syncToElasticsearch() {
+        itemSearchService.syncItemsToElasticsearch();
+        return ResponseEntity.ok(ApiResponse.success("Elasticsearch 데이터 동기화 완료"));
     }
 
 }

@@ -16,7 +16,6 @@ const categoryMap: Record<string, string> = {
   OTHERS: "기타",
 };
 
-// 아이콘 컴포넌트들 생략 (기존과 동일)
 const StarIcon = ({ filled, className }: { filled?: boolean; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -30,7 +29,6 @@ const EyeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// 타입 정의
 interface Item {
   id: number;
   name: string;
@@ -91,6 +89,33 @@ export default function ItemDetailPage() {
   const [activeTab, setActiveTab] = useState<"detail" | "reviews">("detail");
   const [reviews, setReviews] = useState<Review[]>([]);
 
+  // 🌟 [추가됨] 최근 본 상품 기록 남기기 (메인 렌더링에 영향 없도록 별도 분리)
+  useEffect(() => {
+    if (!params.itemId) return;
+
+    const recordRecentView = async () => {
+      let viewerId = localStorage.getItem("viewerId");
+      if (!viewerId) {
+        viewerId = `guest-${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem("viewerId", viewerId);
+      }
+
+      try {
+        await fetchApi(`/items/${params.itemId}/recent`, {
+          method: "POST",
+          headers: { "Viewer-Id": viewerId },
+        });
+        // 사이드바에 갱신 알림
+        window.dispatchEvent(new Event("updateRecentItems"));
+      } catch (err) {
+        console.error("최근 본 상품 기록 실패:", err);
+      }
+    };
+
+    recordRecentView();
+  }, [params.itemId]);
+
+  // 기존 데이터 로딩 로직
   useEffect(() => {
     if (!params.itemId) return;
 
@@ -98,7 +123,6 @@ export default function ItemDetailPage() {
       try {
         setLoading(true);
 
-        // 1. 상품 정보 조회
         const itemRes = await fetchApi<ApiResponse<Item>>(`/items/${params.itemId}`);
         const itemData = itemRes.data;
         setItem(itemData);
@@ -111,7 +135,6 @@ export default function ItemDetailPage() {
             setSelectedImage(DEFAULT_IMAGE);
         }
 
-        // 2. 리뷰 정보 조회
         try {
           const reviewRes = await fetchApi<ApiResponse<PageResponse<Review>>>(`/reviews/items/${params.itemId}`);
           if (reviewRes.data && Array.isArray(reviewRes.data.content)) {
@@ -123,7 +146,6 @@ export default function ItemDetailPage() {
           setReviews([]);
         }
 
-        // 3. 내 정보 조회 (주소 수정 완료: /users/my)
         try {
           const userRes = await fetchApi<ApiResponse<UserInfo>>("/user/my", {
             credentials: "include" 
@@ -238,7 +260,6 @@ export default function ItemDetailPage() {
   const reviewCount = item.reviewCount || 0;
   const viewCount = item.viewCount || 0;
 
-  // 본인 확인
   const isOwner = currentUserId && item.sellerId && (Number(currentUserId) === Number(item.sellerId));
 
   return (
@@ -246,7 +267,6 @@ export default function ItemDetailPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
           
-          {/* 이미지 섹션 */}
           <div className="space-y-4">
             <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden shadow-sm relative group border border-gray-100">
               <img
@@ -275,7 +295,6 @@ export default function ItemDetailPage() {
             )}
           </div>
 
-          {/* 정보 섹션 */}
           <div className="flex flex-col pt-2">
             <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
               <div className="flex items-center gap-2">
@@ -296,7 +315,6 @@ export default function ItemDetailPage() {
                 {item.name}
               </h1>
               
-              {/* [수정] 본인일 때 수정/삭제 버튼 표시 */}
               {isOwner && (
                 <div className="flex gap-2 shrink-0">
                   <button 
@@ -360,7 +378,6 @@ export default function ItemDetailPage() {
           </div>
         </div>
 
-        {/* 하단 탭 */}
         <div id="detail-section"> 
           <div className="flex border-b border-gray-200 mb-10 sticky top-[72px] bg-white z-10">
             <button

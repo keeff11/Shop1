@@ -3,82 +3,74 @@ import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
+import { API_BASE } from "../../../../config/api";
+import { useAuth } from "../../../../contexts/AuthContext";
 
-// 환경 변수 로드 (.env 확인)
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const NAVER_ID = process.env.EXPO_PUBLIC_NAVER_CLIENT_ID;
 
-// [중요] 백엔드 & 네이버 개발자 센터 설정과 100% 일치해야 함
-// 예: http://192.168.0.69:8080/auth/naver/callback
-const REDIRECT_URI = `${API_URL}/auth/naver/callback`;
+// 1. 네이버 서버를 속이기 위한 가짜 주소
+const NAVER_REDIRECT_URI = "http://localhost:8080/auth/naver/callback";
 
-interface NaverCallbackResponse {
-  success: boolean;
-  isRegistered: boolean;
-  signUpToken?: string;
-}
+// 2. 실제로 코드를 백엔드로 보낼 API 주소
+const BACKEND_API_URI = `${API_BASE}/auth/naver/callback`;
 
 export default function NaverLoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 중복 요청 방지를 위한 플래그
   const isRequesting = useRef(false);
 
-  // 1. 네이버 로그인 URL 생성
-  // (보안을 위해 state는 랜덤 문자열을 쓰는 것이 정석이나, 여기선 간단히 처리)
   const STATE_STRING = Math.random().toString(36).substring(2, 15);
   
   const naverAuthUrl =
     `https://nid.naver.com/oauth2.0/authorize` +
     `?response_type=code` +
     `&client_id=${NAVER_ID}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}` +
     `&state=${STATE_STRING}`;
 
-  // 2. 백엔드 로그인 처리 함수
   const handleLogin = async (code: string, state: string) => {
-    if (isRequesting.current) return; // 이미 요청 중이면 무시
+    if (isRequesting.current) return;
     isRequesting.current = true;
     setIsLoading(true);
 
     try {
-      // Axios POST 요청
-      const response = await axios.post<NaverCallbackResponse>(
-        REDIRECT_URI, 
+      const response = await axios.post<any>(
+        BACKEND_API_URI, 
         { code, state },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      const data = response.data;
+      // [핵심 수정] ApiResponse 껍데기 제거
+      const data = response.data.data;
 
-      if (!data.success) {
-        Alert.alert("실패", "네이버 로그인 처리에 실패했습니다.");
+      if (!data) {
+        Alert.alert("실패", "서버로부터 올바른 응답을 받지 못했습니다.");
         router.back();
         return;
       }
 
-      // 성공 분기 처리
-      if (data.isRegistered) {
-        // [A] 기존 회원
+      if (data.isRegistered || data.accessToken) {
+        if (data.accessToken) {
+          await login(data.accessToken); 
+        }
         Alert.alert("환영합니다", "로그인 되었습니다.");
-        router.replace("/");
+        router.replace("/(tabs)");
       } else if (data.signUpToken) {
-        // [B] 신규 회원 -> 추가 정보 페이지로 토큰 전달
         router.push({
-            pathname: "/register/social/additional-info",
+            pathname: "/register/social/additional-info", 
             params: {
                 provider: "naver",
                 naverToken: data.signUpToken
             }
         });
       } else {
-        Alert.alert("오류", "회원가입 토큰이 없습니다.");
+        Alert.alert("오류", "회원가입 정보가 부족합니다.");
         router.back();
       }
 
     } catch (error: any) {
-      console.error("Naver Login Error:", error);
+      console.error("Naver Login Error:", error.response?.data || error.message);
       Alert.alert("오류", "서버 통신 중 오류가 발생했습니다.");
       router.back();
     } finally {
@@ -87,37 +79,38 @@ export default function NaverLoginScreen() {
     }
   };
 
+  const onShouldStartLoadWithRequest = (request: any) => {
+    if (request.url.includes(NAVER_REDIRECT_URI) && request.url.includes("code=") && request.url.includes("state=")) {
+      const urlParts = request.url.split("?");
+      if (urlParts.length > 1) {
+          const queryParams = urlParts[1].split("&");
+          let code = "";
+          let state = "";
+
+          // 타입스크립트 에러 방지용 (param: string)
+          queryParams.forEach((param: string) => {
+              const [key, value] = param.split("=");
+              if (key === "code") code = value;
+              if (key === "state") state = value;
+          });
+
+          if (code && state && !isRequesting.current) {
+              handleLogin(code, state);
+          }
+      }
+      return false; 
+    }
+    return true;
+  };
+
   return (
     <View style={styles.container}>
       <WebView
-        style={{ flex: 1 }}
+        style={{ flex: 1, display: isLoading ? 'none' : 'flex' }}
         source={{ uri: naverAuthUrl }}
-        // userAgent 설정은 구글/네이버 등에서 보안상 모바일 웹뷰를 차단할 때 유용함
-        userAgent="Mozilla/5.0 (content-shell-mobile-use-only)"
-        onNavigationStateChange={(e) => {
-          // 리다이렉트 URI 감지
-          if (e.url.includes(REDIRECT_URI) && e.url.includes("code=") && e.url.includes("state=")) {
-            
-            // URL 파싱 (code, state 추출)
-            // URLSearchParams는 RN 일부 버전에서 지원 안될 수 있어 문자열 split 사용 권장
-            const urlParts = e.url.split("?");
-            if (urlParts.length > 1) {
-                const queryParams = urlParts[1].split("&");
-                let code = "";
-                let state = "";
-
-                queryParams.forEach(param => {
-                    const [key, value] = param.split("=");
-                    if (key === "code") code = value;
-                    if (key === "state") state = value;
-                });
-
-                if (code && state && !isRequesting.current) {
-                    handleLogin(code, state);
-                }
-            }
-          }
-        }}
+        userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36"
+        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        incognito={true}
       />
 
       {isLoading && (
@@ -130,15 +123,6 @@ export default function NaverLoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.9)", justifyContent: "center", alignItems: "center", zIndex: 10 },
 });

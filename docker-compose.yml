@@ -28,6 +28,23 @@ services:
     networks:
       - shop1-network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: shop1-elasticsearch
+    environment:
+      - discovery.type=single-node # 단일 노드 모드 (클러스터 구성 안함)
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # 메모리 제한
+      - xpack.security.enabled=false     # 보안 해제 (로컬과 동일)
+      - xpack.security.http.ssl.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    command: >
+      bash -c "
+      bin/elasticsearch-plugin install --batch analysis-nori;
+      /usr/local/bin/docker-entrypoint.sh
+      "
+
   # 3. 백엔드 (Spring Boot)
   backend:
     build: ./Back-end/shop-1/shop-1/shop-1
