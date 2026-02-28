@@ -27,10 +27,12 @@ services:
     networks:
       - shop1-network
 
-  # 🌟 3. Elasticsearch (수정됨)
+  # 🌟 3. Elasticsearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
     container_name: shop1-elasticsearch
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node 
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m" 
@@ -99,3 +101,6 @@ networks:
   shop1-network:
     name: shop1-network
     driver: bridge
+
+volumes:
+  es_data:
