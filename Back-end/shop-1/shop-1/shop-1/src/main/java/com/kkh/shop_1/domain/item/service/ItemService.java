@@ -1,5 +1,6 @@
 package com.kkh.shop_1.domain.item.service;
 
+import com.kkh.shop_1.common.annotation.DistributedLock;
 import com.kkh.shop_1.common.s3.S3Service;
 import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.entity.Item;
@@ -133,7 +134,7 @@ public class ItemService {
         itemRepository.increaseViewCount(itemId);
 
         redisTemplate.opsForZSet().incrementScore("ranking:items:views", String.valueOf(itemId), 1.0);
-        
+
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다. ID: " + itemId));
 
@@ -147,6 +148,7 @@ public class ItemService {
     /**
      * 재고 차감
      */
+    @DistributedLock(key = "itemId")
     @CacheEvict(value = "item:detail", key = "#itemId")
     public void decreaseStock(Long itemId, int quantity) {
         int updatedRows = itemRepository.decreaseStock(itemId, quantity);

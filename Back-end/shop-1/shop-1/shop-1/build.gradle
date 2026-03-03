@@ -77,6 +77,12 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
+    // Redisson (Redis 분산 락)
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.0'
+
+    // AOP (커스텀 어노테이션용)
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
 
 }
 
