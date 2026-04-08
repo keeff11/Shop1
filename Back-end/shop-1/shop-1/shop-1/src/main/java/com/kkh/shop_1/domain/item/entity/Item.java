@@ -61,18 +61,17 @@ public class Item {
 
     private String thumbnailUrl;
 
-    // 통계 필드
     @Column(nullable = false)
     @ColumnDefault("0")
     private int viewCount = 0;
 
     @Column(nullable = false)
     @ColumnDefault("0")
-    private int reviewCount = 0;
+    private int totalRatingScore = 0;
 
     @Column(nullable = false)
-    @ColumnDefault("0.0")
-    private double averageRating = 0.0;
+    @ColumnDefault("0")
+    private int reviewCount = 0;
 
     @Column(nullable = false)
     @ColumnDefault("0")
@@ -84,7 +83,6 @@ public class Item {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // [수정] Builder에 status 포함 및 기본값 설정 로직 추가
     @Builder
     public Item(Long id, String name, int price, int quantity, ItemCategory itemCategory, String description, User seller, ItemStatus status) {
         this.id = id;
@@ -94,26 +92,22 @@ public class Item {
         this.itemCategory = itemCategory;
         this.description = description;
         this.seller = seller;
-        // 빌더로 들어온 status가 없으면 SELLING으로 초기화
         this.status = status != null ? status : ItemStatus.SELLING;
         this.stockStatus = (quantity > 0) ? StockStatus.IN_STOCK : StockStatus.OUT_OF_STOCK;
     }
 
     // --- 비즈니스 로직 메서드 ---
 
-    // [추가] 상태 변경 메서드 (Setter 대신 비즈니스 메서드로 사용 권장)
     public void setStatus(ItemStatus status) {
         this.status = status;
     }
 
-    // [추가] 수량 변경 메서드 (재고 0이면 품절 처리 포함)
     public void setQuantity(int quantity) {
-        this.quantity = quantity;
-        if (this.quantity <= 0) {
-            this.stockStatus = StockStatus.OUT_OF_STOCK;
-        } else {
-            this.stockStatus = StockStatus.IN_STOCK;
+        if (quantity < 0) {
+            throw new IllegalArgumentException("재고는 0 미만이 될 수 없습니다.");
         }
+        this.quantity = quantity;
+        this.stockStatus = (this.quantity == 0) ? StockStatus.OUT_OF_STOCK : StockStatus.IN_STOCK;
     }
 
     public void update(String name, int price, int quantity, ItemCategory category, String description) {
@@ -140,28 +134,25 @@ public class Item {
         this.thumbnailUrl = url;
     }
 
-    public void updateStock(int newQuantity) {
-        setQuantity(newQuantity);
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
-
     public void addReviewRating(int newRating) {
-        double totalScore = this.averageRating * this.reviewCount;
+        this.totalRatingScore += newRating;
         this.reviewCount++;
-        this.averageRating = (totalScore + newRating) / this.reviewCount;
     }
 
     public void removeReviewRating(int oldRating) {
-        if (this.reviewCount <= 1) {
-            this.reviewCount = 0;
-            this.averageRating = 0.0;
-        } else {
-            double totalScore = this.averageRating * this.reviewCount;
+        if (this.reviewCount > 0) {
+            this.totalRatingScore -= oldRating;
             this.reviewCount--;
-            this.averageRating = (totalScore - oldRating) / this.reviewCount;
+
+            if (this.reviewCount <= 0 || this.totalRatingScore < 0) {
+                this.totalRatingScore = 0;
+                this.reviewCount = 0;
+            }
         }
+    }
+
+    public double getAverageRating() {
+        if (this.reviewCount == 0) return 0.0;
+        return (double) this.totalRatingScore / this.reviewCount;
     }
 }

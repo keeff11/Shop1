@@ -14,13 +14,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- * 네이버페이 결제 서비스 구현체
- *
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,11 +44,6 @@ public class NaverPayService implements PaymentService {
         return PaymentType.NAVER_PAY;
     }
 
-    /**
-     *
-     * 네이버페이 결제 예약 (Reserve API)
-     *
-     */
     @Override
     public PaymentReadyResponseDTO ready(PaymentReadyRequestDTO req) {
         String url = String.format("%s/%s/naverpay/payments/v2/reserve", API_URL, partnerId);
@@ -92,8 +83,35 @@ public class NaverPayService implements PaymentService {
         log.info("NaverPay Approve logic called for ReserveID: {}", req.getTid());
         return PaymentApproveResponseDTO.builder().success(true).build();
     }
+    
+    @Override
+    public void cancel(String paymentKey, String cancelReason, Integer cancelAmount) {
+        String cancelUrl = String.format("%s/%s/naverpay/payments/v1/cancel", API_URL, partnerId);
 
-    // --- Private Helper Methods ---
+        HttpHeaders headers = createHeaders();
+        Map<String, Object> params = new HashMap<>();
+        params.put("paymentId", paymentKey); // 승인된 네이버페이 결제번호
+        params.put("cancelAmount", cancelAmount);
+        params.put("cancelReason", cancelReason);
+        params.put("cancelRequester", 1); // 1: 가맹점 관리자 취소
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(cancelUrl, entity, Map.class);
+            Map<String, Object> responseBody = response.getBody();
+
+            if (isSuccess(responseBody)) {
+                log.info("▶ [네이버페이 결제 취소 완료] paymentId={}, reason={}", paymentKey, cancelReason);
+            } else {
+                log.error("네이버페이 결제 취소 응답 오류: {}", responseBody);
+                throw new RuntimeException("네이버페이 결제 취소 처리가 실패했습니다.");
+            }
+        } catch (Exception e) {
+            log.error("네이버페이 결제 취소 통신 실패: {}", e.getMessage());
+            throw new RuntimeException("네이버페이 결제 취소(보상 트랜잭션) 중 오류 발생", e);
+        }
+    }
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -108,11 +126,6 @@ public class NaverPayService implements PaymentService {
         return responseBody != null && "Success".equals(responseBody.get("code"));
     }
 
-    /**
-     *
-     * 네이버페이 API 전용 내부 요청 객체
-     *
-     */
     @Getter
     @Builder
     private static class NaverReadyRequest {

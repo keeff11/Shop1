@@ -3,40 +3,35 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchApi } from "@/lib/api";
-import { toast } from "sonner"; // toast 라이브러리 확인 필요
+import { toast } from "sonner";
 
 function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  
+  // 렌더링 주기에 영향을 받지 않는 Lock 변수 선언
   const processedRef = useRef(false);
 
   useEffect(() => {
+    // 1. 이미 결제 승인 프로세스가 진행 중이라면 조기 종료 (중복 실행 방어)
     if (processedRef.current) return;
 
-    // URL 파라미터 읽기
     const orderId = searchParams.get("orderId");
-    
-    // 카카오/네이버
     const pgToken = searchParams.get("pg_token");
-    
-    // 토스페이먼츠
     const paymentKey = searchParams.get("paymentKey");
     const amount = searchParams.get("amount");
 
-    // [수정] 유효성 검사: pgToken이나 paymentKey 중 하나라도 있으면 OK
+    // 파라미터가 유효하지 않은 초기 렌더링 시에는 Lock을 걸지 않고 종료
     if (!orderId || (!pgToken && !paymentKey)) {
-      // 파라미터가 아예 없는 경우에만 에러 처리
-      // toast.error("유효하지 않은 결제 정보입니다.");
-      // router.replace("/cart");
       return;
     }
 
+    // 2. API 호출 조건이 충족된 즉시 Lock 활성화
+    processedRef.current = true;
+
     const approvePayment = async () => {
-      processedRef.current = true;
-      
       try {
-        // [수정] API 호출 URL 구성
         let apiUrl = `/orders/payment/approve?orderId=${orderId}`;
         
         if (pgToken) {
@@ -46,10 +41,8 @@ function OrderSuccessContent() {
             apiUrl += `&paymentKey=${paymentKey}&amount=${amount}`;
         }
 
-        // 1. 백엔드 승인 API 호출
         await fetchApi(apiUrl, { credentials: "include" });
 
-        // 2. 장바구니 갱신 등 후처리
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event("cart-updated"));
             sessionStorage.removeItem("checkoutData");
@@ -70,7 +63,6 @@ function OrderSuccessContent() {
     approvePayment();
   }, [searchParams, router]);
 
-  // ... (UI 부분 동일) ...
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-2xl shadow-lg border text-center max-w-sm w-full">

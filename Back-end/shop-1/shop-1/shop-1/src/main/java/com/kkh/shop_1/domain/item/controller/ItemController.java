@@ -134,7 +134,7 @@ public class ItemController {
     }
 
     /**
-     * 🌟 [추가] 최근 본 상품 기록하기 (가벼운 비동기 호출용)
+     * 최근 본 상품 기록
      */
     @PostMapping("/{itemId}/recent")
     public ResponseEntity<ApiResponse<Void>> addRecentItem(
@@ -148,7 +148,7 @@ public class ItemController {
     }
 
     /**
-     * 🌟 [추가] 최근 본 상품 목록 조회
+     * 최근 본 상품 목록 조회
      */
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getRecentItems(
@@ -162,14 +162,22 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.success(recentItems));
     }
 
-    // 🌟 실시간 검색어 자동완성 API
+    /**
+     *
+     * 실시간 검색어 자동완성 API
+     *
+     */
     @GetMapping("/search/autocomplete")
     public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> autocomplete(@RequestParam String keyword) {
         List<ItemSummaryDTO> suggestions = itemSearchService.getAutocompleteSuggestions(keyword);
         return ResponseEntity.ok(ApiResponse.success(suggestions));
     }
 
-    // 🌟 (관리자용) MySQL -> ES 데이터 동기화 트리거
+    /**
+     *
+     * (관리자용) MySQL -> ES 데이터 동기화 트리거
+     *
+     */
     @PostMapping("/search/sync")
     public ResponseEntity<ApiResponse<String>> syncToElasticsearch() {
         itemSearchService.syncItemsToElasticsearch();

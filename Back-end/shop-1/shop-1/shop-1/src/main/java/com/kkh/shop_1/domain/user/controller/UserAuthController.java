@@ -38,6 +38,11 @@ public class UserAuthController {
     private static final String ACCESS_TOKEN = "accessToken";
     private static final String REFRESH_TOKEN = "refreshToken";
 
+    /**
+     *
+     * 내 로그인 상태 조회
+     *
+     **/
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserInfoDTO>> getMyInfo(
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String headerToken,
@@ -52,6 +57,11 @@ public class UserAuthController {
         return ResponseEntity.ok(ApiResponse.success(UserInfoDTO.from(user)));
     }
 
+    /**
+     *
+     * 로컬 회원가입
+     *
+     **/
     @PostMapping("/local/sign-up")
     public ResponseEntity<ApiResponse<LocalSignUpResponseDTO>> signUp(
             @RequestBody LocalSignUpRequestDTO dto, HttpServletResponse response
@@ -61,6 +71,11 @@ public class UserAuthController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     *
+     * 로컬 로그인
+     *
+     **/
     @PostMapping("/local/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> localLogin(
             @RequestBody LocalLoginRequestDTO dto, HttpServletResponse response
@@ -70,6 +85,11 @@ public class UserAuthController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     *
+     * 웹 소셜 로그인용 콜백
+     *
+     **/
     @GetMapping("/{provider}/callback")
     public void socialCallbackWeb(
             @PathVariable String provider, @RequestParam String code,
@@ -81,6 +101,11 @@ public class UserAuthController {
         handleSocialRedirect(response, result, provider);
     }
 
+    /**
+     *
+     * 앱 소셜 로그인용 콜백
+     *
+     **/
     @PostMapping("/{provider}/callback")
     public ResponseEntity<ApiResponse<AuthResult>> socialCallbackApp(
             @PathVariable String provider, @RequestBody Map<String, String> request
@@ -93,6 +118,11 @@ public class UserAuthController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     *
+     * 소셜 로그인
+     *
+     **/
     @PostMapping("/{provider}/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> socialSignUp(
             @PathVariable String provider, @RequestHeader(HttpHeaders.AUTHORIZATION) String signUpToken,
@@ -103,35 +133,60 @@ public class UserAuthController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     *
+     * 로그아웃
+     *
+     **/
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         clearAuthCookies(response);
         return ResponseEntity.ok(ApiResponse.successNoData());
     }
 
+    /**
+     *
+     * 이메일 중복 체크
+     *
+     **/
     @GetMapping("/check-email")
     public ResponseEntity<ApiResponse<Boolean>> checkEmailDuplicate(@RequestParam String email) {
         return ResponseEntity.ok(ApiResponse.success(userAuthService.checkEmailDuplicate(email)));
     }
 
-    // [핵심] 닉네임 중복 체크 API
+    /**
+     *
+     * 닉네임 중복 체크
+     *
+     **/
     @GetMapping("/check-nickname")
     public ResponseEntity<ApiResponse<Boolean>> checkNicknameDuplicate(@RequestParam String nickname) {
         return ResponseEntity.ok(ApiResponse.success(userAuthService.checkNicknameDuplicate(nickname)));
     }
 
+    /**
+     *
+     * 인증 메일 발송
+     *
+     **/
     @PostMapping("/email/send-code")
     public ResponseEntity<ApiResponse<String>> sendEmailCode(@RequestParam String email) {
         emailService.sendVerificationCode(email);
         return ResponseEntity.ok(ApiResponse.success("인증코드가 발송되었습니다."));
     }
 
+    /**
+     *
+     * 인증 메일 확인
+     *
+     **/
     @PostMapping("/email/verify-code")
     public ResponseEntity<ApiResponse<Boolean>> verifyEmailCode(@RequestParam String email, @RequestParam String code) {
         boolean isVerified = emailService.verifyCode(email, code);
         return ResponseEntity.ok(ApiResponse.success(isVerified));
     }
 
+    // --- Controller 내부에서만 사용---
     private String resolveToken(String headerToken, String cookieToken) {
         if (headerToken != null && headerToken.startsWith("Bearer ")) {
             return headerToken.substring(7);

@@ -38,7 +38,6 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
-    // ★ [추가] 결제 수단 저장 (승인 단계에서 필요)
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_type")
     private PaymentType paymentType;
@@ -61,7 +60,6 @@ public class Order {
                 .build();
     }
 
-    // ★ [추가] 결제 타입 설정 메서드
     public void setPaymentType(PaymentType paymentType) {
         this.paymentType = paymentType;
     }
@@ -80,13 +78,20 @@ public class Order {
             throw new IllegalStateException("결제 대기 중인 주문만 결제 완료 처리가 가능합니다.");
         }
         this.status = OrderStatus.PAID;
-        // TID는 이미 ready 단계나 승인 요청 DTO 생성 시점에 갱신되지만, 확실히 하기 위해 저장
         if (tid != null) this.tid = tid;
     }
 
     public void cancel() {
         if (this.status == OrderStatus.DELIVERED) {
             throw new IllegalStateException("이미 배송된 상품은 취소가 불가능합니다.");
+        }
+        this.status = OrderStatus.CANCELLED;
+        this.orderItems.forEach(OrderItem::cancel);
+    }
+
+    public void failPayment() {
+        if (this.status != OrderStatus.PAYMENT_PENDING) {
+            throw new IllegalStateException("결제 대기 상태의 주문만 실패 처리가 가능합니다.");
         }
         this.status = OrderStatus.CANCELLED;
         this.orderItems.forEach(OrderItem::cancel);

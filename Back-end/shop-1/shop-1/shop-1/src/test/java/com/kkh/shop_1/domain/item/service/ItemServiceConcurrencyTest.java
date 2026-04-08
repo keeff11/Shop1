@@ -9,7 +9,6 @@ import com.kkh.shop_1.domain.user.entity.LoginType;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.entity.UserRole;
 import com.kkh.shop_1.domain.user.repository.UserRepository;
-// 👇 DB 부하(커넥션) 측정을 위한 라이브러리 추가
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +40,6 @@ class ItemServiceConcurrencyTest {
     @Autowired
     private UserRepository userRepository;
 
-    // 🌟 DB 커넥션 상태를 확인하기 위해 DataSource 주입
     @Autowired
     private DataSource dataSource;
 
@@ -83,12 +81,10 @@ class ItemServiceConcurrencyTest {
         CountDownLatch latch = new CountDownLatch(threadCount);
 
         // =========================================================================
-        // 🌟 [핵심 추가] 테스트가 진행되는 동안 백그라운드에서 DB 커넥션 사용량을 실시간 감시
         AtomicInteger maxActiveConnections = new AtomicInteger(0);
         Thread monitorThread = new Thread(() -> {
             try {
                 HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
-                // 100개의 요청이 모두 끝날 때까지 0.01초(10ms)마다 DB 상태를 감시!
                 while (latch.getCount() > 0) {
                     int active = hikariDataSource.getHikariPoolMXBean().getActiveConnections();
                     if (active > maxActiveConnections.get()) {
@@ -100,8 +96,8 @@ class ItemServiceConcurrencyTest {
         });
         // =========================================================================
 
-        System.out.println("🚀 [측정 시작] 100명 동시 요청 시 DB 부하 모니터링 시작...");
-        monitorThread.start(); // 감시 카메라 켜기
+        System.out.println("[측정 시작] 100명 동시 요청 시 DB 부하 모니터링 시작");
+        monitorThread.start();
         long startTime = System.currentTimeMillis();
 
         // when: 100명 동시 결제 시작
@@ -119,10 +115,9 @@ class ItemServiceConcurrencyTest {
         latch.await();
         long endTime = System.currentTimeMillis();
 
-        // 🌟 결과 출력
         System.out.println("==================================================");
-        System.out.println("🛑 [측정 종료] 총 소요 시간: " + (endTime - startTime) + " ms");
-        System.out.println("🔥 [DB 부하 지표] 최대 동시 사용 DB 커넥션 수: " + maxActiveConnections.get() + " 개");
+        System.out.println("[측정 종료] 총 소요 시간: " + (endTime - startTime) + " ms");
+        System.out.println("[DB 부하 지표] 최대 동시 사용 DB 커넥션 수: " + maxActiveConnections.get() + " 개");
         System.out.println("==================================================");
 
         // then

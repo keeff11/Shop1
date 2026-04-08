@@ -23,7 +23,9 @@ public class OrderController {
     private final OrderService orderService;
 
     /**
-     * [주문 생성]
+     *
+     * 주문 생성
+     *
      */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<OrderResponseDTO>> order(
@@ -35,14 +37,15 @@ public class OrderController {
     }
 
     /**
+     *
      * 결제 승인 요청 (DTO 사용 버전)
+     *
      */
     @GetMapping("/payment/approve")
     public ApiResponse<OrderDetailDTO> approve(
             @ModelAttribute OrderApproveDTO request,
             @AuthenticationPrincipal Long userId
     ) {
-        // Service 메서드 호출 시 DTO의 값을 꺼내서 전달
         return ApiResponse.success(orderService.approveOrder(
                 request,
                 userId
@@ -50,8 +53,9 @@ public class OrderController {
     }
 
     /**
-     * [단건 상세 조회]
-
+     *
+     * 단건 상세 조회
+     *
      */
     @GetMapping("/detail/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailDTO>> getOrder(
@@ -74,7 +78,9 @@ public class OrderController {
     }
 
     /**
-     * [목록 조회]
+     *
+     * 목록 조회
+     *
      */
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<List<OrderDetailDTO>>> getOrders(@AuthenticationPrincipal Long userId) {

@@ -11,7 +11,8 @@ public enum OrderStatus {
     PAID("결제 완료"),
     CANCELLED("주문 취소"),
     SHIPPING("배송 중"),
-    DELIVERED("배송 완료");
+    DELIVERED("배송 완료"),
+    CANCELED("결제 취소");
 
     private final String description;
 }

@@ -22,8 +22,6 @@ public class QItem extends EntityPathBase<Item> {
 
     public static final QItem item = new QItem("item");
 
-    public final NumberPath<Double> averageRating = createNumber("averageRating", Double.class);
-
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final StringPath description = createString("description");
@@ -53,6 +51,8 @@ public class QItem extends EntityPathBase<Item> {
     public final EnumPath<StockStatus> stockStatus = createEnum("stockStatus", StockStatus.class);
 
     public final StringPath thumbnailUrl = createString("thumbnailUrl");
+
+    public final NumberPath<Integer> totalRatingScore = createNumber("totalRatingScore", Integer.class);
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 

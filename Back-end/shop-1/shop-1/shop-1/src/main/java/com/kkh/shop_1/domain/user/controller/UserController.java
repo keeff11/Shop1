@@ -21,7 +21,9 @@ public class UserController {
     private final UserService userService;
 
     /**
+     *
      * 사용자 정보 조회
+     *
      */
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<UserInfoResponseDTO>> getUserInfo(
@@ -32,8 +34,9 @@ public class UserController {
     }
 
     /**
-     * [추가] 프로필 수정 (이미지 업로드 포함)
-     * 프론트엔드 FormData에 맞춰 @RequestPart 사용
+     *
+     * 프로필 수정
+     *
      */
     @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<UserInfoUpdateResponseDTO>> updateProfile(
@@ -51,13 +54,15 @@ public class UserController {
     }
 
     /**
+     *
      * 비밀번호 변경
+     *
      */
     @PatchMapping("/my/password")
     public ResponseEntity<ApiResponse<?>> updateUserPassword(
             @AuthenticationPrincipal Long userId,
             @RequestBody UserPasswordUpdateRequestDTO userPasswordUpdateRequestDTO
-    ){
+    ) {
         userService.updateUserPassword(userId, userPasswordUpdateRequestDTO);
         return ResponseEntity.ok(ApiResponse.successNoData());
     }

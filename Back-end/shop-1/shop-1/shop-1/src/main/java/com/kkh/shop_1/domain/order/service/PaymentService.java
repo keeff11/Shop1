@@ -12,5 +12,7 @@ public interface PaymentService {
 
     PaymentApproveResponseDTO approve(PaymentApproveRequestDTO request);
 
+    void cancel(String paymentKey, String cancelReason, Integer cancelAmount);
+
     PaymentType getPaymentType();
 }

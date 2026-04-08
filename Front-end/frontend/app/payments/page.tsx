@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
-import Script from "next/script";
+import { loadTossPayments } from "@tosspayments/payment-sdk"; // [추가] 토스 SDK 임포트
 
 const DaumPostcode = dynamic(() => import("react-daum-postcode"), { ssr: false });
 
@@ -13,7 +13,7 @@ const KAKAO_PAY_LOGO = "/kakao_pay.png";
 const NAVER_PAY_LOGO = "/naver_pay.svg";
 const TOSS_PAY_LOGO = "/toss_pay.png";
 
-// [수정] 환경 변수에서 클라이언트 키 로드
+// 환경 변수에서 클라이언트 키 로드
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
 
 interface OrderItem {
@@ -62,7 +62,6 @@ export default function PaymentPage() {
     recipientPhone: "",
   });
   
-  // [토스페이 포함] 결제 수단 상태 관리
   const [paymentType, setPaymentType] = useState<"KAKAO_PAY" | "NAVER_PAY" | "TOSS_PAY">("KAKAO_PAY");
   const [showPostcode, setShowPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -152,8 +151,8 @@ export default function PaymentPage() {
           throw new Error("결제 페이지 URL을 받지 못했습니다.");
         }
       } else if (paymentType === "TOSS_PAY") {
-        // [토스] SDK 호출
-        const tossPayments = (window as any).TossPayments(TOSS_CLIENT_KEY);
+        // [수정] 공식 SDK를 통해 안전하게 객체 로드
+        const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
         
         await tossPayments.requestPayment("카드", {
           amount: finalPrice,
@@ -179,7 +178,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Script src="https://js.tosspayments.com/v1/payment" strategy="lazyOnload" />
+      {/* [수정] next/script 제거 (SDK 로더가 대신 처리함) */}
       
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
         

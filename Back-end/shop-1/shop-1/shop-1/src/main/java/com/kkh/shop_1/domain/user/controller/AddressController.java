@@ -19,7 +19,9 @@ public class AddressController {
     private final AddressService addressService;
 
     /**
+     *
      * 유저 배송지 조회
+     *
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<AddressResponseDTO>>> getUserAddresses(
@@ -30,7 +32,9 @@ public class AddressController {
     }
 
     /**
-     * [추가] 배송지 등록
+     *
+     * 배송지 등록
+     *
      */
     @PostMapping
     public ResponseEntity<ApiResponse<AddressResponseDTO>> createAddress(

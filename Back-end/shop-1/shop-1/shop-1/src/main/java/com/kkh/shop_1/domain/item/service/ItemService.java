@@ -40,7 +40,6 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ItemService {
 
     private final ItemRepository itemRepository;
@@ -50,7 +49,9 @@ public class ItemService {
     private static final String DEFAULT_IMAGE = "/no_image.jpg";
 
     /**
+     *
      * 상품 등록
+     *
      */
     @CacheEvict(value = "items", key = "'all'")
     public Long createItem(CreateItemRequestDTO createItemRequestDTO,
@@ -69,7 +70,9 @@ public class ItemService {
     }
 
     /**
+     *
      * 상품 수정
+     *
      */
     @Caching(evict = {
             @CacheEvict(value = "items", key = "'all'"),       // 목록 캐시 삭제
@@ -106,7 +109,9 @@ public class ItemService {
     }
 
     /**
+     *
      * 상품 삭제
+     *
      */
     @Caching(evict = {
             @CacheEvict(value = "items", key = "'all'"),
@@ -125,7 +130,9 @@ public class ItemService {
     }
 
     /**
+     *
      * 상품 상세 조회
+     *
      */
     @Transactional
     @Cacheable(value = "item:detail", key = "#itemId")
@@ -146,15 +153,26 @@ public class ItemService {
     }
 
     /**
+     *
      * 재고 차감
+     *
      */
-    // 🌟 [수정] 대기 시간(waitTime) 10초, 점유 시간(leaseTime) 5초로 연장
     @CacheEvict(value = "item:detail", key = "#itemId")
     public void decreaseStock(Long itemId, int quantity) {
         int updatedRows = itemRepository.decreaseStock(itemId, quantity);
         if (updatedRows == 0) {
             throw new IllegalStateException("재고가 부족합니다. ItemID: " + itemId);
         }
+    }
+
+    /**
+     *
+     * 재고 복구
+     *
+     */
+    @CacheEvict(value = "item:detail", key = "#itemId")
+    public void increaseStock(Long itemId, int quantity) {
+        itemRepository.increaseStock(itemId, quantity);
     }
 
     // --- 조회용 (ReadOnly) ---

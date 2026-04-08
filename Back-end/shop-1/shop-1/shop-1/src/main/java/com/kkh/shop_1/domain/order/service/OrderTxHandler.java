@@ -55,7 +55,6 @@ public class OrderTxHandler {
         order.setPaymentType(dto.getPaymentType());
 
         for (OrderRequestDTO.ItemOrder io : dto.getItemOrders()) {
-            // Redis 락이 이미 걸려있으므로 안전하게 재고 차감 가능
             itemService.decreaseStock(io.getItemId(), io.getQuantity());
 
             Item item = itemService.findById(io.getItemId())
@@ -98,5 +97,20 @@ public class OrderTxHandler {
         } catch (Exception e) {
             log.error("장바구니 삭제 실패", e);
         }
+    }
+
+    @Transactional
+    public void cancelOrderPayment(Long orderId) {
+        Order order = orderRepository.findByIdWithFetch(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 주문이 존재하지 않습니다. ID: " + orderId));
+
+        order.failPayment();
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            itemService.increaseStock(orderItem.getItem().getId(), orderItem.getQuantity());
+        }
+
+        orderRepository.save(order);
+        log.info("▶ [내부 DB 취소 처리] 주문 번호 {}에 대한 상태 변경 및 재고 복구 완료", orderId);
     }
 }

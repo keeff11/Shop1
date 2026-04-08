@@ -28,6 +28,7 @@ public class KakaoPayService implements PaymentService {
 
     private static final String READY_URL = "https://open-api.kakaopay.com/online/v1/payment/ready";
     private static final String APPROVE_URL = "https://open-api.kakaopay.com/online/v1/payment/approve";
+    private static final String CANCEL_URL = "https://open-api.kakaopay.com/online/v1/payment/cancel";
 
     @Override
     public PaymentType getPaymentType() {
@@ -59,7 +60,6 @@ public class KakaoPayService implements PaymentService {
     public PaymentApproveResponseDTO approve(PaymentApproveRequestDTO req) {
         HttpHeaders headers = createHeaders();
 
-        // [수정] 카카오 승인 API 파라미터 구성
         Map<String, String> params = new HashMap<>();
         params.put("cid", cid);
         params.put("tid", req.getTid());
@@ -79,6 +79,27 @@ public class KakaoPayService implements PaymentService {
         } catch (Exception e) {
             log.error("KakaoPay Approve Failed: {}", e.getMessage());
             throw new RuntimeException("결제 승인 과정에서 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Override
+    public void cancel(String paymentKey, String cancelReason, Integer cancelAmount) {
+        HttpHeaders headers = createHeaders();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("cid", cid);
+        params.put("tid", paymentKey); // 카카오페이는 준비 단계에서 발급받은 tid를 결제 키로 사용합니다.
+        params.put("cancel_amount", cancelAmount);
+        params.put("cancel_tax_free_amount", 0);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(params, headers);
+
+        try {
+            restTemplate.postForEntity(CANCEL_URL, entity, Map.class);
+            log.info("▶ [카카오페이 결제 취소 완료] tid={}, reason={}", paymentKey, cancelReason);
+        } catch (Exception e) {
+            log.error("🚨 카카오페이 결제 취소 실패: {}", e.getMessage());
+            throw new RuntimeException("카카오페이 결제 취소 중 오류가 발생했습니다.", e);
         }
     }
 
