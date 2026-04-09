@@ -268,7 +268,6 @@ public class ItemService {
         }
     }
 
-    // 검색 결과 페이징 처리
     @Transactional(readOnly = true)
     public Page<ItemSummaryDTO> searchItems(ItemSearchCondition condition, Pageable pageable) {
         return itemRepository.search(condition, pageable)

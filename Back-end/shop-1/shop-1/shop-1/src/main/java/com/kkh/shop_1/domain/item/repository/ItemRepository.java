@@ -15,8 +15,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemRepositor
 
     List<Item> findByItemCategory(ItemCategory itemCategory);
 
-    @Query("SELECT DISTINCT i FROM Item i LEFT JOIN FETCH i.images")
-    List<Item> findAllWithImages();
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Item i SET i.quantity = i.quantity - :count WHERE i.id = :id AND i.quantity >= :count")

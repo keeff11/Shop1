@@ -30,7 +30,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
                 .selectFrom(item)
 //                .leftJoin(item.images, itemImage).fetchJoin()
                 .where(
-                        statusNotDeleted(), // [추가] 삭제된 상품 제외
+                        statusNotDeleted(),
                         keywordContains(condition.getKeyword()),
                         categoryEq(condition.getCategory()),
                         priceGoe(condition.getMinPrice()),
@@ -55,7 +55,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    // [추가] 삭제된 상태(DELETED)가 아닌 상품만 필터링
+    @Override
+    public List<Item> findAllWithImages() {
+        return queryFactory
+                .selectFrom(item)
+                .leftJoin(item.images, itemImage).fetchJoin() // 자소서에 적힌 QueryDSL Fetch Join!
+                .distinct()
+                .fetch();
+    }
+
     private BooleanExpression statusNotDeleted() {
         return item.status.ne(ItemStatus.DELETED);
     }
