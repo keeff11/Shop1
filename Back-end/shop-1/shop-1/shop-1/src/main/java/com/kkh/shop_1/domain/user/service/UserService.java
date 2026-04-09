@@ -22,7 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final S3Service s3Service; // [추가] S3 업로드 서비스 주입
+    private final S3Service s3Service;
 
     public User findById(Long id) {
         return userRepository.findById(id)
@@ -35,7 +35,9 @@ public class UserService {
     }
 
     /**
-     * [수정] 프로필 수정 (이미지 파일 처리 추가)
+     *
+     * 프로필 수정 (이미지 파일 처리 추가)
+     *
      */
     @Transactional
     public UserInfoUpdateResponseDTO updateUserProfile(Long userId, UserInfoUpdateRequestDTO dto, MultipartFile profileImg) {

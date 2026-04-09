@@ -22,7 +22,7 @@ public class ItemSearchService {
     private final ItemRepository itemRepository;
 
     /**
-     * [1] 기존 MySQL 데이터를 Elasticsearch로 전체 동기화 (초기 세팅용)
+     * 기존 MySQL 데이터를 Elasticsearch로 전체 동기화
      */
     @Transactional(readOnly = true)
     public void syncItemsToElasticsearch() {
@@ -38,7 +38,7 @@ public class ItemSearchService {
     }
 
     /**
-     * [2] 실시간 초성 및 단어 자동완성 검색
+     * 실시간 초성 및 단어 자동완성 검색
      */
     public List<ItemSummaryDTO> getAutocompleteSuggestions(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {

@@ -11,7 +11,6 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    // 특정 상품의 리뷰 조회 (최신순, 페이징 지원)
     @Query("select r from Review r join fetch r.user left join fetch r.images where r.item.id = :itemId order by r.createdAt desc")
     Page<Review> findAllByItemId(@Param("itemId") Long itemId, Pageable pageable);
 }

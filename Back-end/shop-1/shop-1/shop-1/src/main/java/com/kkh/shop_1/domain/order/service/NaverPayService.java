@@ -93,7 +93,7 @@ public class NaverPayService implements PaymentService {
         params.put("paymentId", paymentKey); // 승인된 네이버페이 결제번호
         params.put("cancelAmount", cancelAmount);
         params.put("cancelReason", cancelReason);
-        params.put("cancelRequester", 1); // 1: 가맹점 관리자 취소
+        params.put("cancelRequester", 1);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(params, headers);
 

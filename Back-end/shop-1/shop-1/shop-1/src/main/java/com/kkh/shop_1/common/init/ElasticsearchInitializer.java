@@ -15,7 +15,9 @@ public class ElasticsearchInitializer {
     private final ItemSearchService itemSearchService;
 
     /**
+     *
      * 스프링 부트 서버가 완전히 켜진 직후(ApplicationReadyEvent에 자동 실행
+     *
      */
     @EventListener(ApplicationReadyEvent.class)
     public void syncDataOnStartup() {

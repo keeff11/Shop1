@@ -56,7 +56,6 @@ public class OrderDetailDTO {
         private int couponDiscount;
         private int finalPrice;
         private int totalPrice;
-        // ★ [추가] 리뷰 작성 여부 필드
         @JsonProperty("isReviewWritten")
         private boolean isReviewWritten;
 

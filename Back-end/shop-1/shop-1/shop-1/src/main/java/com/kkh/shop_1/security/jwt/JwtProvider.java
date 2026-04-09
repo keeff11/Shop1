@@ -135,16 +135,13 @@ public class JwtProvider {
             throw new IllegalArgumentException("Not an access token");
         }
 
-        // DB를 거치지 않고 토큰에서 바로 userId와 Role 추출
         Long userId = Long.valueOf(claims.getSubject());
         String userRole = (String) claims.get("userRole");
 
-        // 권한 리스트 생성 (Role이 있으면 생성, 없으면 빈 리스트)
         Collection<? extends GrantedAuthority> authorities = (userRole != null)
                 ? Collections.singletonList(new SimpleGrantedAuthority(userRole))
                 : Collections.emptyList();
 
-        // Principal 자리에 UserDetails 대신 userId(Long) 자체를 넣음
         return new UsernamePasswordAuthenticationToken(userId, null, authorities);
     }
 

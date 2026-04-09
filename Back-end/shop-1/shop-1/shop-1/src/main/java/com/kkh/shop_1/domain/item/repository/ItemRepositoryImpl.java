@@ -28,7 +28,6 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     public Page<Item> search(ItemSearchCondition condition, Pageable pageable) {
         List<Item> content = queryFactory
                 .selectFrom(item)
-//                .leftJoin(item.images, itemImage).fetchJoin()
                 .where(
                         statusNotDeleted(),
                         keywordContains(condition.getKeyword()),

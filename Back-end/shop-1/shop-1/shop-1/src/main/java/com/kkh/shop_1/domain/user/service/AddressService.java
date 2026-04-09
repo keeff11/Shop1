@@ -21,29 +21,28 @@ public class AddressService {
     private final UserService userService; // [추가] 유저 조회를 위해 필요
 
     /**
+     *
      * 배송지 ID로 엔티티 조회
+     *
      */
     public Optional<Address> findById(Long addressId) {
         return addressRepository.findById(addressId);
     }
 
     /**
-     * 배송지 저장 (엔티티 직접 저장용)
+     *
+     * 배송지 저장
+     *
      */
     @Transactional
     public void save(Address address) {
         addressRepository.save(address);
     }
 
-    /**
-     * [추가] 배송지 신규 등록
-     */
     @Transactional
     public AddressResponseDTO createAddress(Long userId, AddressCreateRequestDTO dto) {
-        // 1. 유저 조회
-        User user = userService.findById(userId);
 
-        // 2. 주소 엔티티 생성 (정적 팩토리 메서드 활용)
+        User user = userService.findById(userId);
         Address address = Address.create(
                 user,
                 dto.getZipCode(),
@@ -53,26 +52,17 @@ public class AddressService {
                 dto.getRecipientPhone()
         );
 
-        // 3. 저장
         addressRepository.save(address);
-        user.addAddress(address); // (선택) 양방향 연관관계 편의 메서드 호출
-
-        // 4. DTO 변환 및 반환
+        user.addAddress(address);
         return AddressResponseDTO.from(address);
     }
-
-    /**
-     * 특정 유저의 배송지 목록을 DTO로 변환하여 조회
-     */
     public List<AddressResponseDTO> getUserAddresses(Long userId) {
         return addressRepository.findByUserId(userId).stream()
                 .map(AddressResponseDTO::from)
                 .toList();
     }
 
-    /**
-     * 특정 유저의 배송지 엔티티 목록 조회 (내부 로직용)
-     */
+
     public List<Address> findByUserId(Long userId) {
         return addressRepository.findByUserId(userId);
     }

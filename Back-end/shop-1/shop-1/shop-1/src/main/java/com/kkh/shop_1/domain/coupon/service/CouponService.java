@@ -110,22 +110,17 @@ public class CouponService {
     }
 
     /**
-     * 🚀 [포트폴리오 핵심 로직] 선착순 쿠폰 발급 (비관적 락 적용)
+     * 선착순 쿠폰 발급
      */
     public void issueCoupon(Long userId, Long couponId) {
-        // 1. 비관적 락을 걸고 쿠폰 조회 (다른 스레드는 대기함)
         Coupon coupon = couponRepository.findByIdWithPessimisticLock(couponId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."));
 
-        // 2. 이미 발급받은 쿠폰인지 확인 (중복 발급 방지)
         if (userCouponRepository.existsByUser_IdAndCoupon_Id(userId, couponId)) {
             throw new IllegalStateException("이미 발급받은 쿠폰입니다.");
         }
-
-        // 3. 발급 처리 (수량 검증 및 증가)
         coupon.issue();
 
-        // 4. 유저 쿠폰 매핑 정보 저장
         User user = userService.findById(userId);
         UserCoupon userCoupon = UserCoupon.builder()
                 .user(user)

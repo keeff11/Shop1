@@ -18,23 +18,25 @@ import java.time.Duration;
 public class RedisConfig {
 
     /**
-     * [1] RedisTemplate 설정
+     *
+     * RedisTemplate 설정
+     *
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // Key는 문자열로 저장
         template.setKeySerializer(new StringRedisSerializer());
-        // Value는 JSON으로 저장
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return template;
     }
 
     /**
-     * [2] RedisCacheManager 설정
+     *
+     * RedisCacheManager 설정
+     *
      */
     @Bean
     public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {

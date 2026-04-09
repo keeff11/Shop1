@@ -18,16 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reviews") // 경로 단순화 (RESTful)
+@RequestMapping("/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     /**
-     * 리뷰 작성 API
-     * POST /reviews?orderItemId={id}
-     * Content-Type: multipart/form-data
+     *
+     * 리뷰 작성
+     *
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> create(
@@ -41,7 +41,9 @@ public class ReviewController {
     }
 
     /**
+     *
      * 리뷰 삭제 API
+     *
      */
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> delete(
@@ -53,16 +55,16 @@ public class ReviewController {
     }
 
     /**
-     * 상품별 리뷰 조회 API
-     * GET /reviews/items/{itemId}
+     *
+     * 상품별 리뷰 조회
+     *
      */
     @GetMapping("/items/{itemId}")
     public ResponseEntity<ApiResponse<Page<ReviewResponseDto>>> getReviews(
             @PathVariable Long itemId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal Long userId // 로그인 안 했으면 null (Security 설정 필요)
+            @AuthenticationPrincipal Long userId
     ) {
-        // 비로그인 사용자도 리뷰는 볼 수 있어야 하므로 userId null 처리 주의
         Page<ReviewResponseDto> reviews = reviewService.getReviewsByItem(itemId, pageable, userId);
         return ResponseEntity.ok(ApiResponse.success(reviews));
     }

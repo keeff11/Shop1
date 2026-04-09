@@ -9,9 +9,9 @@ import java.io.Serializable; // [1. 추가]
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ItemSummaryDTO implements Serializable { // [2. 추가] implements Serializable
+public class ItemSummaryDTO implements Serializable {
 
-    private static final long serialVersionUID = 1L; // [3. 권장] 버전 관리를 위한 ID 추가
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private String name;

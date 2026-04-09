@@ -62,20 +62,10 @@ public class OrderItem {
         return orderItem;
     }
 
-    /**
-     *
-     * 연관관계 편의 메서드: 주문 할당
-     *
-     */
     public void assignOrder(Order order) {
         this.order = order;
     }
 
-    /**
-     *
-     * 쿠폰 적용 및 가격 재계산
-     *
-     */
     public void applyCoupon(Coupon coupon) {
         if (coupon == null) return;
 
@@ -84,28 +74,13 @@ public class OrderItem {
         this.finalPrice = Math.max(0, this.originalPrice - discount); // 가격은 0원 미만 불가
     }
 
-    /**
-     *
-     * 주문 취소
-     *
-     */
     public void cancel() {
     }
 
-    /**
-     *
-     * 이 상품 항목의 총 결제 금액 계산
-     *
-     */
     public int getTotalPrice() {
         return getFinalPrice() * getQuantity();
     }
 
-    /**
-     *
-     * 리뷰 작성 상태로 변경
-     *
-     */
     public void changeReviewStatus() {
         this.reviewWritten = true;
     }

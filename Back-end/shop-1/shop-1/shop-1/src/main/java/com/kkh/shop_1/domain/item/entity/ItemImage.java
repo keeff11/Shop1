@@ -43,11 +43,7 @@ public class ItemImage {
         this.item = item;
     }
 
-    /**
-     *
-     * 상품(Item) 할당 및 양방향 연관관계 설정
-     *
-     */
+
     public void setItem(Item item) {
         this.item = item;
     }

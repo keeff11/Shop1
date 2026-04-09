@@ -4,8 +4,10 @@ import com.kkh.shop_1.domain.user.entity.User;
 import lombok.*;
 
 /**
- * * 사용자 정보 수정 결과 응답 DTO
- * */
+ *
+ *사용자 정보 수정 결과 응답 DTO
+ *
+ **/
 @Getter
 @Builder
 @AllArgsConstructor

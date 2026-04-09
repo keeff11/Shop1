@@ -33,11 +33,10 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins:http://localhost:3000}")
     private List<String> allowedOrigins;
 
-    // [핵심 수정] 인증 없이 누구나 접근 가능한 경로만 남김
-    // /user/**, /cart/**, /orders/** 등은 로그인 필수이므로 제거함
+
     private static final String[] WHITELIST = {
-            "/auth/**",        // 로그인, 회원가입, 토큰 재발급 등
-            "/items/**",       // 상품 목록 조회 (누구나 볼 수 있음)
+            "/auth/**",
+            "/items/**",
             "/reviews/items/**",
             "/error",
             "/favicon.ico"

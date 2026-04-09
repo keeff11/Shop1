@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor // ★ 필수: JSON 파싱을 위한 기본 생성자
+@NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequestDto {
 

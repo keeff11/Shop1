@@ -12,12 +12,12 @@ import java.util.List;
 @Builder
 public class ReviewResponseDto {
     private Long reviewId;
-    private String nickname;     // 작성자 닉네임
+    private String nickname;
     private int rating;
     private String content;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
-    private boolean isOwner;     // 현재 로그인한 사용자가 작성자인지 여부
+    private boolean isOwner;
 
     public static ReviewResponseDto of(Review review, Long currentUserId) {
         return ReviewResponseDto.builder()

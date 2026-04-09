@@ -34,7 +34,7 @@ public class KakaoService {
 
     /**
      *
-     * [통합 메서드] 인가 코드를 받아 카카오 사용자 정보까지 한 번에 획득
+     * 인가 코드를 받아 카카오 사용자 정보까지 한 번에 획득
      *
      */
     public KakaoUserInfoDTO getKakaoUserInfo(String code) {

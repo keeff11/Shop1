@@ -6,8 +6,10 @@ import com.kkh.shop_1.domain.user.entity.UserRole;
 import lombok.*;
 
 /**
- * * 사용자 상세 정보 응답 DTO
- * */
+ *
+ *사용자 상세 정보 응답 DTO
+ *
+ */
 @Getter
 @Builder
 @AllArgsConstructor
@@ -22,8 +24,10 @@ public class UserInfoResponseDTO {
     private UserRole userRole;
 
     /**
-     * * User 엔티티를 응답 DTO로 변환
-     * */
+     *
+     * User 엔티티를 응답 DTO로 변환
+     *
+     */
     public static UserInfoResponseDTO from(User user) {
         return UserInfoResponseDTO.builder()
                 .userId(user.getId())

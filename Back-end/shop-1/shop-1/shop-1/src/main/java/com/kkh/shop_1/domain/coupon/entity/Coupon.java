@@ -43,8 +43,8 @@ public class Coupon {
     private LocalDateTime expiredAt;
 
     // --- 추가된 필드 ---
-    private int totalQuantity;  // 발행 가능한 총 쿠폰 수량
-    private int issuedQuantity; // 현재까지 발급된 수량
+    private int totalQuantity;
+    private int issuedQuantity;
 
     // 할인 금액 계산
     public int calculateDiscount(int originalPrice) {
@@ -54,7 +54,7 @@ public class Coupon {
         return originalPrice * discountValue / 100;
     }
 
-    // 쿠폰 발급 (수량 증가 및 검증)
+    // 쿠폰 발급
     public void issue() {
         if (this.issuedQuantity >= this.totalQuantity) {
             throw new IllegalStateException("준비된 쿠폰이 모두 소진되었습니다.");

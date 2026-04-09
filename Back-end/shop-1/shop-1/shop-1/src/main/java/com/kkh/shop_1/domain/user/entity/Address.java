@@ -41,11 +41,6 @@ public class Address {
     @Column(nullable = false)
     private boolean isDefault;
 
-    /**
-     *
-     * 빌더용 생성자
-     *
-     */
     @Builder
     private Address(Long id, User user, String zipCode, String roadAddress, String detailAddress,
                     String recipientName, String recipientPhone, boolean isDefault) {
@@ -59,11 +54,6 @@ public class Address {
         this.isDefault = isDefault;
     }
 
-    /**
-     *
-     * 정적 팩토리 메서드: 일반 배송지 객체 생성
-     *
-     */
     public static Address create(User user, String zipCode, String roadAddress, String detailAddress,
                                  String recipientName, String recipientPhone) {
         return Address.builder()
@@ -77,11 +67,6 @@ public class Address {
                 .build();
     }
 
-    /**
-     *
-     * 정적 팩토리 메서드: 회원가입 시 등 기본 배송지로 설정될 객체 생성
-     *
-     */
     public static Address createDefault(User user, String zipCode, String roadAddress, String detailAddress,
                                         String recipientName, String recipientPhone) {
         Address address = create(user, zipCode, roadAddress, detailAddress, recipientName, recipientPhone);
@@ -89,38 +74,18 @@ public class Address {
         return address;
     }
 
-    /**
-     *
-     * 연관관계 편의 메서드: 소유 유저 할당
-     *
-     */
     public void assignUser(User user) {
         this.user = user;
     }
 
-    /**
-     *
-     * 현재 배송지를 기본 배송지로 활성화
-     *
-     */
     public void markAsDefault() {
         this.isDefault = true;
     }
 
-    /**
-     *
-     * 현재 배송지의 기본 배송지 설정을 해제
-     *
-     */
     public void unmarkDefault() {
         this.isDefault = false;
     }
 
-    /**
-     *
-     * 기존 배송지 정보 필드 일괄 업데이트
-     *
-     */
     public void update(String zipCode, String roadAddress, String detailAddress,
                        String recipientName, String recipientPhone) {
         this.zipCode = zipCode;

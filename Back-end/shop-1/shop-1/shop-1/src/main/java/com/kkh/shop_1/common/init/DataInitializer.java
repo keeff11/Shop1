@@ -46,16 +46,15 @@ public class DataInitializer {
     @Transactional
     public void initData() {
         if (userRepository.count() > 0) {
-            log.info("ℹ️ [DataInitializer] 데이터가 이미 존재합니다.");
+            log.info("[DataInitializer] 데이터가 이미 존재합니다.");
             return;
         }
 
-        log.info("🚀 [DataInitializer] V2 데이터 생성을 시작합니다...");
+        log.info("[DataInitializer] V2 데이터 생성을 시작합니다...");
 
         Faker faker = new Faker(new Locale("ko"));
         Random random = new Random();
 
-        // 1. 유저 생성
         List<User> allUsers = createUsers(faker);
         List<User> sellers = allUsers.stream().filter(u -> u.getUserRole() == UserRole.SELLER).toList();
         List<User> customers = allUsers.stream().filter(u -> u.getUserRole() == UserRole.CUSTOMER).toList();
@@ -63,13 +62,11 @@ public class DataInitializer {
         if (sellers.isEmpty()) sellers = List.of(allUsers.get(0));
         if (customers.isEmpty()) customers = List.of(allUsers.get(0));
 
-        // 2. 상품 생성 (v2 JSON 사용)
         List<Item> items = createRealItemsFromJson(sellers, random);
 
-        // 3. 리뷰 생성
         createReviews(items, customers, random, faker);
 
-        log.info("🎉 초기화 완료! 상품 {}개 생성됨.", items.size());
+        log.info("초기화 완료 상품 {}개 생성됨.", items.size());
     }
 
     private List<User> createUsers(Faker faker) {
@@ -87,19 +84,16 @@ public class DataInitializer {
     private List<Item> createRealItemsFromJson(List<User> sellers, Random random) {
         List<Item> items = new ArrayList<>();
         try {
-            // v2 JSON 파일 로드 (약 70~80개 데이터)
             ClassPathResource resource = new ClassPathResource("data/items_v2.json");
             InputStream inputStream = resource.getInputStream();
             List<ItemJsonDto> jsonItems = objectMapper.readValue(inputStream, new TypeReference<List<ItemJsonDto>>() {});
 
-            // 반복 횟수 설정 (총 300개 목표 -> 약 4바퀴)
             int targetTotal = 300;
             int loops = (targetTotal / jsonItems.size()) + 1;
 
             String[] prefixes = {"", "[공식]", "[특가]", "[해외직구]", "[무료배송]", "[한정판]", "[S급]", "[리퍼브]"};
 
             for (int i = 0; i < loops; i++) {
-                // 매 바퀴마다 섞어서 패턴이 보이지 않게 함
                 Collections.shuffle(jsonItems);
 
                 for (ItemJsonDto dto : jsonItems) {
@@ -107,11 +101,8 @@ public class DataInitializer {
 
                     User seller = sellers.get(random.nextInt(sellers.size()));
 
-                    // 가격 변동
                     int priceNoise = (int) (dto.getPrice() * (0.9 + random.nextDouble() * 0.2));
                     int finalPrice = (priceNoise / 100) * 100;
-
-                    // 접두사 랜덤 선택 (순차적 반복 X)
                     String prefix = prefixes[random.nextInt(prefixes.length)];
                     String fullName = prefix.isEmpty() ? dto.getName() : prefix + " " + dto.getName();
 
@@ -125,14 +116,11 @@ public class DataInitializer {
                             .status(ItemStatus.SELLING)
                             .build();
 
-                    // 깨지지 않는 검증된 URL 사용
                     String safeImageUrl = (dto.getImageUrl() != null && !dto.getImageUrl().isEmpty())
                             ? dto.getImageUrl()
                             : "https://placehold.co/600x400?text=No+Image";
 
                     item.setThumbnailUrl(safeImageUrl);
-
-                    // 상세 이미지
                     item.addImage(ItemImage.builder().imageUrl(safeImageUrl).isMainImage(true).sortOrder(0).item(item).build());
                     item.addImage(ItemImage.builder().imageUrl(safeImageUrl).isMainImage(false).sortOrder(1).item(item).build());
 
@@ -140,7 +128,7 @@ public class DataInitializer {
                 }
             }
         } catch (Exception e) {
-            log.error("❌ 데이터 로드 실패: ", e);
+            log.error("데이터 로드 실패: ", e);
         }
         return itemRepository.saveAll(items);
     }

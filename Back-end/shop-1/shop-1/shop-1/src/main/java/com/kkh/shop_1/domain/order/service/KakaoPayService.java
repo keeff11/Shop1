@@ -96,9 +96,9 @@ public class KakaoPayService implements PaymentService {
 
         try {
             restTemplate.postForEntity(CANCEL_URL, entity, Map.class);
-            log.info("▶ [카카오페이 결제 취소 완료] tid={}, reason={}", paymentKey, cancelReason);
+            log.info("카카오페이 결제 취소 완료 tid={}, reason={}", paymentKey, cancelReason);
         } catch (Exception e) {
-            log.error("🚨 카카오페이 결제 취소 실패: {}", e.getMessage());
+            log.error("카카오페이 결제 취소 실패: {}", e.getMessage());
             throw new RuntimeException("카카오페이 결제 취소 중 오류가 발생했습니다.", e);
         }
     }

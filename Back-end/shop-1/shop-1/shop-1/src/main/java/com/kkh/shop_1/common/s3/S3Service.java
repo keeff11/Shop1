@@ -103,10 +103,10 @@ public class S3Service {
             s3.putObject(new PutObjectRequest(bucketName, key, inputStream, metadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead));
 
-            log.info("S3 upload success: {}", key);
+            log.info("S3 업로드 성공: {}", key);
             return s3.getUrl(bucketName, key).toString();
         } catch (SdkClientException e) {
-            log.error("S3 upload failed: {}", key, e);
+            log.error("S3 업로드 실패: {}", key, e);
             throw new IOException("S3 upload failed", e);
         }
     }

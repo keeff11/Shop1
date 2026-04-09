@@ -34,12 +34,13 @@ public class ReviewService {
     private final S3Service s3Service; // S3 서비스 주입
 
     /**
+     *
      * 리뷰 등록 및 상품 평점 반영
+     *
      */
     @Transactional
     public Long createReview(Long orderItemId, Long userId, ReviewRequestDto dto, List<MultipartFile> imageFiles) {
 
-        // 1. 주문 상품 및 유저 검증
         OrderItem orderItem = orderService.findByOrderItemId(orderItemId)
                 .orElseThrow(() -> new IllegalArgumentException("주문 내역이 존재하지 않습니다."));
 
@@ -52,18 +53,14 @@ public class ReviewService {
 
         Item item = orderItem.getItem();
 
-        // 2. 리뷰 엔티티 생성
         Review review = Review.createReview(item, user, dto.getRating(), dto.getContent());
 
-        // 3. 이미지 S3 업로드 (경로: reviews/itemId/userId)
         if (imageFiles != null && !imageFiles.isEmpty()) {
             String folderPath = String.format("reviews/%d/%d", item.getId(), userId);
 
             for (MultipartFile file : imageFiles) {
                 try {
-                    // S3 업로드
                     String uploadedUrl = s3Service.uploadImage(folderPath, file);
-                    // DB 저장
                     review.addImage(ReviewImage.createReviewImage(review, uploadedUrl));
                 } catch (IOException e) {
                     log.error("S3 이미지 업로드 실패: {}", e.getMessage());
@@ -72,7 +69,6 @@ public class ReviewService {
             }
         }
 
-        // 4. 평점 반영 및 상태 변경
         item.addReviewRating(dto.getRating());
         orderItem.changeReviewStatus();
 
@@ -80,33 +76,32 @@ public class ReviewService {
     }
 
     /**
+     *
      * 리뷰 삭제 (S3 이미지 포함)
+     *
      */
     @Transactional
     public void deleteReview(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰가 존재하지 않습니다."));
 
-        // 작성자 본인 확인 (관리자는 패스하려면 로직 추가 필요)
         if (!review.getUser().getId().equals(userId)) {
             throw new IllegalStateException("삭제 권한이 없습니다.");
         }
 
-        // 1. S3에서 이미지 삭제
-        // (리뷰에 포함된 모든 이미지를 순회하며 삭제)
         for (ReviewImage image : review.getImages()) {
             s3Service.deleteImageByUrl(image.getImageUrl());
         }
 
-        // 2. 상품 평점 복구
         review.getItem().removeReviewRating(review.getRating());
 
-        // 3. DB 삭제 (orphanRemoval=true 설정으로 인해 ReviewImage 데이터도 자동 삭제됨)
         reviewRepository.delete(review);
     }
 
     /**
+     *
      * 상품별 리뷰 목록 조회 (페이징)
+     *
      */
     public Page<ReviewResponseDto> getReviewsByItem(Long itemId, Pageable pageable, Long currentUserId) {
         return reviewRepository.findAllByItemId(itemId, pageable)

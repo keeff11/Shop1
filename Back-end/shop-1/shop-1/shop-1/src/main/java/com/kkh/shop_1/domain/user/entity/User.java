@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * * 시스템 사용자 엔티티
- * */
+ *
+ * 시스템 사용자 엔티티
+ *
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -53,9 +55,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
-    /**
-     * * 빌더용 생성자
-     * */
+
     @Builder
     private User(Long id, LoginType loginType, String socialId, String email, String password,
                  String profileImg, String nickname, UserRole userRole) {
@@ -69,9 +69,7 @@ public class User {
         this.userRole = userRole;
     }
 
-    /**
-     * * [정적 팩토리] 로컬 유저 생성
-     * */
+
     public static User createLocalUser(String email, String encodedPassword, String nickname, UserRole role) {
         return User.builder()
                 .loginType(LoginType.LOCAL)
@@ -82,9 +80,7 @@ public class User {
                 .build();
     }
 
-    /**
-     * * [정적 팩토리] 소셜 유저 생성
-     * */
+
     public static User createSocialUser(LoginType type, String socialId, String email, String nickname, String profileImg, UserRole role) {
         return User.builder()
                 .loginType(type)
@@ -114,9 +110,7 @@ public class User {
 
     // ======= 비즈니스 메서드 =======
 
-    /**
-     * * 프로필 정보 수정
-     * */
+
     public void updateProfile(String nickname, String profileImg) {
         this.nickname = nickname;
         if (profileImg != null) { // 이미지가 null이 아닐 때만 업데이트
@@ -124,9 +118,6 @@ public class User {
         }
     }
 
-    /**
-     * * 비밀번호 변경 (로컬 유저 전용)
-     * */
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }

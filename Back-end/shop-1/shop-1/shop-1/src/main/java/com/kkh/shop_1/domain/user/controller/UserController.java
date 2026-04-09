@@ -44,10 +44,8 @@ public class UserController {
             @RequestPart("nickname") String nickname,
             @RequestPart(value = "profileImg", required = false) MultipartFile profileImg
     ) {
-        // 닉네임만 있는 DTO 생성
-        UserInfoUpdateRequestDTO requestDTO = new UserInfoUpdateRequestDTO(nickname);
 
-        // 서비스 호출 (이미지 파일 함께 전달)
+        UserInfoUpdateRequestDTO requestDTO = new UserInfoUpdateRequestDTO(nickname);
         UserInfoUpdateResponseDTO responseDTO = userService.updateUserProfile(userId, requestDTO, profileImg);
 
         return ResponseEntity.ok(ApiResponse.success(responseDTO));

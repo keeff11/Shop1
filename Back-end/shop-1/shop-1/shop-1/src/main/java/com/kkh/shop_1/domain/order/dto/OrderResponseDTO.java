@@ -34,7 +34,6 @@ public class OrderResponseDTO {
                 .tid(paymentResponseDTO.getTid())
                 .redirectUrl(paymentResponseDTO.getRedirectUrl())
                 .orderDate(order.getOrderDate())
-                // .paymentType(order.getPaymentType()) // 필요 시 Order 엔티티에 결제 수단 필드 추가 후 매핑
                 .addressId(address.getId())
                 .zipCode(address.getZipCode())
                 .roadAddress(address.getRoadAddress())
