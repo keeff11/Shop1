@@ -17,6 +17,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -185,14 +187,28 @@ public class ItemService {
                 .toList();
     }
 
+    // 전체 목록 조회
+    @Transactional(readOnly = true)
+    public Page<ItemSummaryDTO> searchItems(ItemSearchCondition condition, Pageable pageable) {
+        return itemRepository.search(condition, pageable)
+                .map(ItemSummaryDTO::from);
+    }
+
     // 전체 목록 조회 (캐시 적용 유지)
     @Transactional(readOnly = true)
+
     @Cacheable(value = "items", key = "'all'")
+
     public List<ItemSummaryDTO> getAllItems() {
+
         return itemRepository.findAllWithImages().stream()
+
                 .filter(item -> item.getStatus() != ItemStatus.DELETED)
+
                 .map(ItemSummaryDTO::from)
+
                 .toList();
+
     }
 
     @Transactional(readOnly = true)
@@ -266,12 +282,6 @@ public class ItemService {
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new IllegalArgumentException("존재하지 않는 카테고리입니다: " + categoryName);
         }
-    }
-
-    @Transactional(readOnly = true)
-    public Page<ItemSummaryDTO> searchItems(ItemSearchCondition condition, Pageable pageable) {
-        return itemRepository.search(condition, pageable)
-                .map(ItemSummaryDTO::from);
     }
 
     @Transactional(readOnly = true)

@@ -70,12 +70,33 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.success("상품이 성공적으로 삭제되었습니다."));
     }
 
+    /**
+     *
+     * 전체 상품 목록 조회 (batch size)
+     *
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ItemSummaryDTO>>> getItems1(
+            @ModelAttribute ItemSearchCondition condition,
+            @PageableDefault(size = 12) Pageable pageable
+    ) {
+        Page<ItemSummaryDTO> items = itemService.searchItems(condition, pageable);
+        return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
+    /**
+     *
+     * 전체 상품 목록 조회 (fetch join)
+     *
+     */
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<ItemSummaryDTO>>> getAllItemsForTest() {
-        // Service의 @Cacheable 붙은 메서드를 직접 호출
+
         List<ItemSummaryDTO> items = itemService.getAllItems();
         return ResponseEntity.ok(ApiResponse.success(items));
     }
+
 
     /**
      *
@@ -90,7 +111,6 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.success(myItems));
     }
 
-
     /**
      *
      * 상품 상세 조회
@@ -100,20 +120,6 @@ public class ItemController {
     public ResponseEntity<ApiResponse<ItemDetailDTO>> getItem(@PathVariable Long itemId) {
         ItemDetailDTO dto = itemService.getItemDetail(itemId);
         return ResponseEntity.ok(ApiResponse.success(dto));
-    }
-
-    /**
-     *
-     * 전체 상품 목록 조회
-     *
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<ItemSummaryDTO>>> getItems(
-            @ModelAttribute ItemSearchCondition condition,
-            @PageableDefault(size = 12) Pageable pageable
-    ) {
-        Page<ItemSummaryDTO> items = itemService.searchItems(condition, pageable);
-        return ResponseEntity.ok(ApiResponse.success(items));
     }
 
     /**
