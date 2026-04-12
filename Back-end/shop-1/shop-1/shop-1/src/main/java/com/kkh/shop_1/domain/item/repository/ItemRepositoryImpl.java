@@ -44,7 +44,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
                 .select(item.count())
                 .from(item)
                 .where(
-                        statusNotDeleted(), // [추가] 카운트 쿼리에도 적용
+                        statusNotDeleted(),
                         keywordContains(condition.getKeyword()),
                         categoryEq(condition.getCategory()),
                         priceGoe(condition.getMinPrice()),
@@ -58,7 +58,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     public List<Item> findAllWithImages() {
         return queryFactory
                 .selectFrom(item)
-                .leftJoin(item.images, itemImage).fetchJoin() // 자소서에 적힌 QueryDSL Fetch Join!
+                .leftJoin(item.images, itemImage).fetchJoin()
                 .distinct()
                 .fetch();
     }
