@@ -33,53 +33,67 @@ public class GenerateErdTest {
     private EntityManager entityManager;
 
     @Test
-    public void generateMermaidErdAndInjectToReadme() throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append("```mermaid\n");
-        sb.append("erDiagram\n");
+    public void generateMermaidErdAndInjectToReadme() {
+        try {
+            System.out.println("========== ERD 자동 생성 프로세스 시작 ==========");
 
-        Set<EntityType<?>> entities = entityManager.getMetamodel().getEntities();
+            StringBuilder sb = new StringBuilder();
+            sb.append("```mermaid\n");
+            sb.append("erDiagram\n");
 
-        // 1. 엔티티 및 컬럼 파싱
-        for (EntityType<?> entity : entities) {
-            String tableName = entity.getJavaType().getSimpleName();
-            sb.append("    ").append(tableName).append(" {\n");
+            Set<EntityType<?>> entities = entityManager.getMetamodel().getEntities();
 
-            for (Attribute<?, ?> attribute : entity.getAttributes()) {
-                if (!attribute.isAssociation()) {
-                    // 💡 해결 1: Mermaid 파서를 고장내는 배열 기호([]) 및 특수기호 제거
-                    String type = attribute.getJavaType().getSimpleName().replace("[]", "");
-                    String name = attribute.getName();
-                    sb.append("        ").append(type).append(" ").append(name).append("\n");
+            // 1. 엔티티 및 컬럼 파싱 (Null-Safe 방어 코드 적용)
+            for (EntityType<?> entity : entities) {
+                if (entity.getJavaType() == null) continue;
+                String tableName = entity.getJavaType().getSimpleName();
+                sb.append("    ").append(tableName).append(" {\n");
+
+                for (Attribute<?, ?> attribute : entity.getAttributes()) {
+                    if (!attribute.isAssociation()) {
+                        String type = (attribute.getJavaType() != null)
+                                ? attribute.getJavaType().getSimpleName().replace("[]", "")
+                                : "Unknown";
+                        String name = (attribute.getName() != null) ? attribute.getName() : "unknown";
+                        sb.append("        ").append(type).append(" ").append(name).append("\n");
+                    }
                 }
+                sb.append("    }\n\n");
             }
-            sb.append("    }\n\n");
-        }
 
-        // 2. 연관관계 파싱 (단방향 최적화)
-        for (EntityType<?> entity : entities) {
-            String sourceTable = entity.getJavaType().getSimpleName();
-            for (Attribute<?, ?> attribute : entity.getAttributes()) {
-                if (attribute.isAssociation()) {
-                    // 💡 해결 2: 양방향 선이 2개씩 그려져 렌더링이 뻗는 현상 방지
-                    // DB의 실제 외래키(FK) 방향인 단일 참조(ManyToOne, OneToOne)일 때만 선을 1개 그립니다.
-                    if (!(attribute instanceof PluralAttribute)) {
-                        String targetTable = attribute.getJavaType().getSimpleName();
-                        sb.append("    ").append(sourceTable).append(" }o--|| ").append(targetTable).append(" : references\n");
+            // 2. 연관관계 파싱 (단방향 최적화 및 Null-Safe 방어 코드 적용)
+            for (EntityType<?> entity : entities) {
+                if (entity.getJavaType() == null) continue;
+                String sourceTable = entity.getJavaType().getSimpleName();
+
+                for (Attribute<?, ?> attribute : entity.getAttributes()) {
+                    if (attribute.isAssociation() && !(attribute instanceof PluralAttribute)) {
+                        if (attribute.getJavaType() != null) {
+                            String targetTable = attribute.getJavaType().getSimpleName();
+                            sb.append("    ").append(sourceTable).append(" }o--|| ").append(targetTable).append(" : references\n");
+                        }
                     }
                 }
             }
-        }
-        sb.append("```\n");
+            sb.append("```\n");
 
-        updateReadmeWithErd(sb.toString());
+            System.out.println("========== ERD 텍스트 파싱 완료. README 주입 시작 ==========");
+            updateReadmeWithErd(sb.toString());
+            System.out.println("========== README 주입 성공! ==========");
+
+        } catch (Exception e) {
+            // 💡 GitHub Actions 로그에 정확한 에러 원인을 강제로 출력시킵니다.
+            System.err.println("🚨 ERD 생성 중 치명적 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ERD 생성 실패", e);
+        }
     }
 
     private void updateReadmeWithErd(String mermaidCode) throws IOException {
         Path readmePath = Paths.get("../../../../README.md");
         if (!Files.exists(readmePath)) {
-            System.out.println("README.md 파일을 찾을 수 없습니다: " + readmePath.toAbsolutePath());
-            return;
+            System.out.println("⚠️ README.md 파일을 찾을 수 없습니다: " + readmePath.toAbsolutePath());
+            return; // 파일이 없으면 에러를 내지 않고 안전하게 종료합니다.
         }
 
         List<String> lines = Files.readAllLines(readmePath, StandardCharsets.UTF_8);
