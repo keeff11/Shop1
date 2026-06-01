@@ -6,6 +6,7 @@ import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.PluralAttribute;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient; // 추가됨
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration;
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean; // 추가됨
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +47,10 @@ import java.util.Set;
         MailSenderAutoConfiguration.class
 })
 public class GenerateErdTest {
+
+    // ✅ 핵심 해결책: Redisson 연결을 시도하는 객체를 가짜(Mock)로 덮어씌워 TCP 연결 시도 원천 차단
+    @MockBean
+    private RedissonClient redissonClient;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -105,7 +111,6 @@ public class GenerateErdTest {
         boolean inErdBlock = false;
 
         for (String line : lines) {
-            // 주의: 이전에 복사하실 때 주석 태그가 누락되어 복구했습니다.
             if (line.contains("")) {
                 newContent.append(line).append("\n");
                 newContent.append(mermaidCode);
@@ -119,6 +124,7 @@ public class GenerateErdTest {
                 newContent.append(line).append("\n");
             }
         }
+
         Files.write(readmePath, newContent.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
