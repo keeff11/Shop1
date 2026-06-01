@@ -119,7 +119,6 @@ public class GenerateErdTest {
                 newContent.append(line).append("\n");
             }
         }
-
         Files.write(readmePath, newContent.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
