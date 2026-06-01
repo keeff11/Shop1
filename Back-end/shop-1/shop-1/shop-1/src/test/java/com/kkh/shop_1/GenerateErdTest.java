@@ -10,12 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
-import java.io.IOException;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.Set;
 
 @DataJpaTest(properties = {
@@ -43,7 +40,7 @@ public class GenerateErdTest {
 
             Set<EntityType<?>> entities = entityManager.getMetamodel().getEntities();
 
-            // 1. 엔티티 및 컬럼 파싱 (Null-Safe 방어 코드 적용)
+            // 1. 엔티티 파싱
             for (EntityType<?> entity : entities) {
                 if (entity.getJavaType() == null) continue;
                 String tableName = entity.getJavaType().getSimpleName();
@@ -61,7 +58,7 @@ public class GenerateErdTest {
                 sb.append("    }\n\n");
             }
 
-            // 2. 연관관계 파싱 (단방향 최적화 및 Null-Safe 방어 코드 적용)
+            // 2. 연관관계 파싱
             for (EntityType<?> entity : entities) {
                 if (entity.getJavaType() == null) continue;
                 String sourceTable = entity.getJavaType().getSimpleName();
@@ -78,43 +75,42 @@ public class GenerateErdTest {
             sb.append("```\n");
 
             System.out.println("========== ERD 텍스트 파싱 완료. README 주입 시작 ==========");
-            updateReadmeWithErd(sb.toString());
-            System.out.println("========== README 주입 성공! ==========");
 
-        } catch (Exception e) {
-            // 💡 GitHub Actions 로그에 정확한 에러 원인을 강제로 출력시킵니다.
-            System.err.println("🚨 ERD 생성 중 치명적 오류 발생: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("ERD 생성 실패", e);
-        }
-    }
-
-    private void updateReadmeWithErd(String mermaidCode) throws IOException {
-        Path readmePath = Paths.get("../../../../README.md");
-        if (!Files.exists(readmePath)) {
-            System.out.println("⚠️ README.md 파일을 찾을 수 없습니다: " + readmePath.toAbsolutePath());
-            return; // 파일이 없으면 에러를 내지 않고 안전하게 종료합니다.
-        }
-
-        List<String> lines = Files.readAllLines(readmePath, StandardCharsets.UTF_8);
-        StringBuilder newContent = new StringBuilder();
-        boolean inErdBlock = false;
-
-        for (String line : lines) {
-            if (line.contains("")) {
-                newContent.append(line).append("\n");
-                newContent.append(mermaidCode);
-                inErdBlock = true;
-                continue;
+            // 파일 경로 지정 및 존재 여부 확인
+            File readmeFile = new File("../../../../README.md");
+            if (!readmeFile.exists()) {
+                System.out.println("⚠️ README.md 파일을 찾을 수 없습니다: " + readmeFile.getAbsolutePath());
+                return;
             }
-            if (line.contains("")) {
-                inErdBlock = false;
-            }
-            if (!inErdBlock) {
-                newContent.append(line).append("\n");
-            }
-        }
 
-        Files.write(readmePath, newContent.toString().getBytes(StandardCharsets.UTF_8));
+            // 💡 해결: 파일을 바이트 배열로 한 번에 읽어와 인코딩 충돌 원천 차단
+            String content = new String(Files.readAllBytes(readmeFile.toPath()), StandardCharsets.UTF_8);
+
+            String startMarker = "";
+            String endMarker = "";
+
+            int startIndex = content.indexOf(startMarker);
+            int endIndex = content.indexOf(endMarker);
+
+            // 💡 해결: 복잡한 정규식이나 반복문 대신, 문자열을 Index 기준으로 정확하게 잘라서 이어 붙임
+            if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
+                String before = content.substring(0, startIndex + startMarker.length());
+                String after = content.substring(endIndex);
+
+                String newContent = before + "\n" + sb.toString() + after;
+
+                // 덮어쓰기 저장
+                Files.write(readmeFile.toPath(), newContent.getBytes(StandardCharsets.UTF_8));
+                System.out.println("========== README 주입 성공! ==========");
+            } else {
+                System.out.println("⚠️ README.md 안에 마커 주석()이 올바르게 존재하지 않습니다.");
+            }
+
+        } catch (Throwable t) {
+            // Error, Exception 등 어떤 문제가 생겨도 무조건 화면에 출력
+            System.out.println("🚨 ERD 생성 중 치명적 오류 발생: " + t.getMessage());
+            t.printStackTrace(System.out);
+            throw new RuntimeException("ERD 생성 실패", t);
+        }
     }
 }
