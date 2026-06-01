@@ -47,7 +47,8 @@ public class GenerateErdTest {
 
             for (Attribute<?, ?> attribute : entity.getAttributes()) {
                 if (!attribute.isAssociation()) {
-                    String type = attribute.getJavaType().getSimpleName();
+                    // 💡 해결 1: Mermaid 파서를 고장내는 배열 기호([]) 및 특수기호 제거
+                    String type = attribute.getJavaType().getSimpleName().replace("[]", "");
                     String name = attribute.getName();
                     sb.append("        ").append(type).append(" ").append(name).append("\n");
                 }
@@ -55,20 +56,16 @@ public class GenerateErdTest {
             sb.append("    }\n\n");
         }
 
-        // 2. 연관관계 파싱 (문법 수정된 부분 ✨)
+        // 2. 연관관계 파싱 (단방향 최적화)
         for (EntityType<?> entity : entities) {
             String sourceTable = entity.getJavaType().getSimpleName();
             for (Attribute<?, ?> attribute : entity.getAttributes()) {
                 if (attribute.isAssociation()) {
-                    String targetTable;
-                    if (attribute instanceof PluralAttribute) {
-                        targetTable = ((PluralAttribute<?, ?, ?>) attribute).getElementType().getJavaType().getSimpleName();
-                        // 기존 ||--{ 대신 ||--o{ 사용
-                        sb.append("    ").append(sourceTable).append(" ||--o{ ").append(targetTable).append(" : \"has\"\n");
-                    } else {
-                        targetTable = attribute.getJavaType().getSimpleName();
-                        // 기존 }|--|| 대신 }o--|| 사용
-                        sb.append("    ").append(sourceTable).append(" }o--|| ").append(targetTable).append(" : \"references\"\n");
+                    // 💡 해결 2: 양방향 선이 2개씩 그려져 렌더링이 뻗는 현상 방지
+                    // DB의 실제 외래키(FK) 방향인 단일 참조(ManyToOne, OneToOne)일 때만 선을 1개 그립니다.
+                    if (!(attribute instanceof PluralAttribute)) {
+                        String targetTable = attribute.getJavaType().getSimpleName();
+                        sb.append("    ").append(sourceTable).append(" }o--|| ").append(targetTable).append(" : references\n");
                     }
                 }
             }
