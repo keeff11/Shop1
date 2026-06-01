@@ -1,5 +1,6 @@
 package com.kkh.shop_1;
 
+import com.kkh.shop_1.common.config.QuerydslConfig; // 💡 Querydsl 설정 임포트 추가
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.Attribute;
@@ -7,6 +8,7 @@ import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.PluralAttribute;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import; // 💡 Import 어노테이션 추가
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
-// 💡 핵심: @SpringBootTest 대신 @DataJpaTest 사용! (Service, Controller 등 불필요한 빈 로드 생략)
 @DataJpaTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL",
         "spring.datasource.driver-class-name=org.h2.Driver",
@@ -25,6 +26,7 @@ import java.util.Set;
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
+@Import(QuerydslConfig.class) // 💡 핵심: @DataJpaTest에서 누락된 QueryDSL 빈 설정을 수동으로 주입합니다.
 public class GenerateErdTest {
 
     @PersistenceContext
