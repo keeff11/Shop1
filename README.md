@@ -21,6 +21,7 @@
 ## 🛠 Tech Stack
 
 ### Backend
+<img src="https://img.shields.io/badge/Java 17-007396?style=flat-square&logo=OpenJDK&logoColor=white"/> <img src="https://img.shields.io/badge/Spring Boot 3-6DB33F?style=flat-square&logo=Spring Boot&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL 8-4479A1?style=flat-square&logo=MySQL&logoColor=white"/> <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=Redis&logoColor=white"/> <img src="https://img.shields.io/badge/Elasticsearch-005571?style=flat-square&logo=Elasticsearch&logoColor=white"/>
 * **Java 17, Spring Boot 3.x**: 최신 LTS 버전을 활용한 안정적인 서버 구축
 * **JPA (Hibernate), QueryDSL**: 복잡한 동적 쿼리 처리 및 타입 안전성 확보
 * **Redis**: 캐싱을 통한 조회 성능 개선 및 분산 환경 세션 관리
@@ -28,10 +29,12 @@
 * **MySQL 8.0**: 대용량 데이터 저장을 위한 관계형 데이터베이스
 
 ### Frontend & Mobile
+<img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=Next.js&logoColor=white"/> <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=TypeScript&logoColor=white"/> <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=React&logoColor=black"/> <img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=Flutter&logoColor=white"/>
 * **Next.js (React), TypeScript**: SSR 기반의 SEO 최적화 및 빠른 렌더링
 * **Flutter**: 크로스 플랫폼 모바일 앱 지원
 
 ### Infra & DevOps
+<img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=Docker&logoColor=white"/> <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=flat-square&logo=GitHub Actions&logoColor=white"/> <img src="https://img.shields.io/badge/AWS EC2-232F3E?style=flat-square&logo=Amazon AWS&logoColor=white"/>
 * **Docker, Docker Compose**: 개발 및 프로덕션 환경의 일치화
 * **GitHub Actions**: 테스트 및 배포 자동화 (CI/CD)
 * **AWS EC2**: 클라우드 서버 호스팅
@@ -67,6 +70,11 @@
 3.  **Docker 배포 시 데이터 초기화 및 영속성 관리 전략 개선**
     * **문제:** CI/CD 배포 시 기존 데이터가 남아있어 초기화 로직이 동작하지 않거나 데이터가 유실되는 문제.
     * **해결:** Docker Volume 생명주기를 고려한 `ddl-auto` 전략 연계 및 맞춤형 배포 스크립트 작성.
+
+---
+
+## 📊 데이터베이스 ERD
+(아래 다이어그램은 코드가 변경될 때마다 자동 업데이트됩니다.)
 
 ---
 

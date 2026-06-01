@@ -32,6 +32,7 @@ public class OrderService {
     private final RedissonClient redissonClient;
 
     public OrderResponseDTO orderItems(Long userId, OrderRequestDTO dto) {
+        
         User user = userService.findById(userId);
 
         List<Long> sortedItemIds = dto.getItemOrders().stream()
@@ -69,9 +70,7 @@ public class OrderService {
         }
 
         PaymentReadyResponseDTO paymentResponse = preparePayment(user, order, dto);
-
         orderTxHandler.updateTid(order.getId(), paymentResponse.getTid());
-
         return OrderResponseDTO.of(order, address, paymentResponse);
     }
 

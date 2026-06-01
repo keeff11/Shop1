@@ -196,19 +196,12 @@ public class ItemService {
 
     // 전체 목록 조회 (캐시 적용 유지)
     @Transactional(readOnly = true)
-
     @Cacheable(value = "items", key = "'all'")
-
     public List<ItemSummaryDTO> getAllItems() {
-
         return itemRepository.findAllWithImages().stream()
-
                 .filter(item -> item.getStatus() != ItemStatus.DELETED)
-
                 .map(ItemSummaryDTO::from)
-
                 .toList();
-
     }
 
     @Transactional(readOnly = true)
