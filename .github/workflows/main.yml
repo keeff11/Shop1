@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
 
-# 1. ERD가 반영된 README.md를 깃허브에 다시 푸시하기 위해 권한을 추가합니다.
 permissions:
   contents: write
 
@@ -15,12 +14,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # === 2. 여기서부터 ERD 자동화 파트가 추가됩니다 ===
+      # 1. 테스트 실행 전 JDK 세팅 수행
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      # 2. GitHub Actions 러너 내부 가상 컴퓨터에도 설정 파일 임시 생성
+      - name: Create Temporary Properties for Test Runner
+        run: |
+          mkdir -p Back-end/shop-1/shop-1/shop-1/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > Back-end/shop-1/shop-1/shop-1/src/main/resources/application.properties
+          echo "${{ secrets.ENV_FILE }}" > Back-end/shop-1/shop-1/shop-1/.env || true
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -42,9 +48,8 @@ jobs:
             git commit -m "docs: 시스템 엔티티 변경에 따른 ERD 자동 업데이트 [skip ci]"
             git push origin HEAD:main
           fi
-      # === ERD 자동화 파트 끝 ===
 
-      # 3. 기존에 잘 되던 템플릿 그대로 유지 (동작 보장)
+      # 3. 서버 업로드 템플릿
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
