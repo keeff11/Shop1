@@ -1,6 +1,6 @@
 package com.kkh.shop_1;
 
-import com.kkh.shop_1.common.config.QuerydslConfig; // 💡 Querydsl 설정 임포트 추가
+import com.kkh.shop_1.common.config.QuerydslConfig;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.Attribute;
@@ -8,7 +8,7 @@ import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.PluralAttribute;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import; // 💡 Import 어노테이션 추가
+import org.springframework.context.annotation.Import;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +26,7 @@ import java.util.Set;
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Import(QuerydslConfig.class) // 💡 핵심: @DataJpaTest에서 누락된 QueryDSL 빈 설정을 수동으로 주입합니다.
+@Import(QuerydslConfig.class)
 public class GenerateErdTest {
 
     @PersistenceContext
@@ -55,7 +55,7 @@ public class GenerateErdTest {
             sb.append("    }\n\n");
         }
 
-        // 2. 연관관계 파싱
+        // 2. 연관관계 파싱 (문법 수정된 부분 ✨)
         for (EntityType<?> entity : entities) {
             String sourceTable = entity.getJavaType().getSimpleName();
             for (Attribute<?, ?> attribute : entity.getAttributes()) {
@@ -63,10 +63,12 @@ public class GenerateErdTest {
                     String targetTable;
                     if (attribute instanceof PluralAttribute) {
                         targetTable = ((PluralAttribute<?, ?, ?>) attribute).getElementType().getJavaType().getSimpleName();
-                        sb.append("    ").append(sourceTable).append(" ||--{ ").append(targetTable).append(" : \"has\"\n");
+                        // 기존 ||--{ 대신 ||--o{ 사용
+                        sb.append("    ").append(sourceTable).append(" ||--o{ ").append(targetTable).append(" : \"has\"\n");
                     } else {
                         targetTable = attribute.getJavaType().getSimpleName();
-                        sb.append("    ").append(sourceTable).append(" }|--|| ").append(targetTable).append(" : \"references\"\n");
+                        // 기존 }|--|| 대신 }o--|| 사용
+                        sb.append("    ").append(sourceTable).append(" }o--|| ").append(targetTable).append(" : \"references\"\n");
                     }
                 }
             }
