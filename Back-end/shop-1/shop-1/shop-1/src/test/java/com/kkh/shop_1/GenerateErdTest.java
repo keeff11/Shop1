@@ -75,15 +75,13 @@ public class GenerateErdTest {
             sb.append("```\n");
 
             System.out.println("========== ERD 텍스트 파싱 완료. README 주입 시작 ==========");
-
-            // 파일 경로 지정 및 존재 여부 확인
+            
             File readmeFile = new File("../../../../README.md");
             if (!readmeFile.exists()) {
                 System.out.println("⚠️ README.md 파일을 찾을 수 없습니다: " + readmeFile.getAbsolutePath());
                 return;
             }
 
-            // 💡 해결: 파일을 바이트 배열로 한 번에 읽어와 인코딩 충돌 원천 차단
             String content = new String(Files.readAllBytes(readmeFile.toPath()), StandardCharsets.UTF_8);
 
             String startMarker = "";
@@ -92,7 +90,6 @@ public class GenerateErdTest {
             int startIndex = content.indexOf(startMarker);
             int endIndex = content.indexOf(endMarker);
 
-            // 💡 해결: 복잡한 정규식이나 반복문 대신, 문자열을 Index 기준으로 정확하게 잘라서 이어 붙임
             if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
                 String before = content.substring(0, startIndex + startMarker.length());
                 String after = content.substring(endIndex);
