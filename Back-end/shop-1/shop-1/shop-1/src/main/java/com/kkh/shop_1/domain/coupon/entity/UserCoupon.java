@@ -24,5 +24,12 @@ public class UserCoupon {
     private Coupon coupon;
 
     private boolean used;
+
+    public void markUsed() {
+        if (this.used) {
+            throw new IllegalStateException("이미 사용된 쿠폰입니다.");
+        }
+        this.used = true;
+    }
 }
 

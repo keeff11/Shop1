@@ -37,6 +37,9 @@ public class OrderItem {
     @Column(nullable = false)
     private int finalPrice;      // 최종 결제 단가
 
+    @Column(name = "user_coupon_id")
+    private Long userCouponId;   // 적용된 보유 쿠폰 ID (결제 완료 시 사용 처리에 사용)
+
     @Column(nullable = false)
     private boolean reviewWritten = false;
 
@@ -66,12 +69,13 @@ public class OrderItem {
         this.order = order;
     }
 
-    public void applyCoupon(Coupon coupon) {
+    public void applyCoupon(Coupon coupon, Long userCouponId) {
         if (coupon == null) return;
 
         int discount = coupon.calculateDiscount(this.originalPrice);
         this.couponDiscount = discount;
         this.finalPrice = Math.max(0, this.originalPrice - discount); // 가격은 0원 미만 불가
+        this.userCouponId = userCouponId;
     }
 
     public void cancel() {

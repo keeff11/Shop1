@@ -110,6 +110,35 @@ public class CouponService {
     }
 
     /**
+     *
+     * 주문 시 사용할 보유 쿠폰 조회 (소유 + 미사용 검증)
+     *
+     */
+    @Transactional(readOnly = true)
+    public UserCoupon getUsableUserCoupon(Long userId, Long couponId) {
+        UserCoupon userCoupon = userCouponRepository.findByUser_IdAndCoupon_Id(userId, couponId)
+                .orElseThrow(() -> new IllegalArgumentException("보유하지 않은 쿠폰입니다. ID: " + couponId));
+
+        if (userCoupon.isUsed()) {
+            throw new IllegalStateException("이미 사용된 쿠폰입니다. ID: " + couponId);
+        }
+
+        return userCoupon;
+    }
+
+    /**
+     *
+     * 주문 완료 시 보유 쿠폰 사용 처리 (동시성 제어: 비관적 락)
+     *
+     */
+    public void markUserCouponUsed(Long userCouponId) {
+        UserCoupon userCoupon = userCouponRepository.findByIdWithPessimisticLock(userCouponId)
+                .orElseThrow(() -> new IllegalArgumentException("보유 쿠폰을 찾을 수 없습니다. ID: " + userCouponId));
+
+        userCoupon.markUsed();
+    }
+
+    /**
      * 선착순 쿠폰 발급
      */
     public void issueCoupon(Long userId, Long couponId) {

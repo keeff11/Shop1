@@ -48,6 +48,9 @@ public class Coupon {
 
     // 할인 금액 계산
     public int calculateDiscount(int originalPrice) {
+        if (this.expiredAt != null && this.expiredAt.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("만료된 쿠폰입니다.");
+        }
         if (discountType == DiscountType.FIXED) {
             return Math.min(discountValue, originalPrice);
         }
