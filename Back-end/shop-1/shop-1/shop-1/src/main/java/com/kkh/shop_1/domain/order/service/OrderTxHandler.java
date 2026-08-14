@@ -1,7 +1,7 @@
 package com.kkh.shop_1.domain.order.service;
 
 import com.kkh.shop_1.domain.cart.service.CartItemService;
-import com.kkh.shop_1.domain.coupon.entity.Coupon;
+import com.kkh.shop_1.domain.coupon.entity.UserCoupon;
 import com.kkh.shop_1.domain.coupon.service.CouponService;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.service.ItemService;
@@ -63,8 +63,8 @@ public class OrderTxHandler {
             OrderItem orderItem = OrderItem.create(item, io.getQuantity());
 
             if (io.getCouponId() != null) {
-                Coupon coupon = couponService.getCouponById(io.getCouponId());
-                orderItem.applyCoupon(coupon);
+                UserCoupon userCoupon = couponService.getUsableUserCoupon(user.getId(), io.getCouponId());
+                orderItem.applyCoupon(userCoupon.getCoupon(), userCoupon.getId());
             }
             order.addOrderItem(orderItem);
         }
@@ -85,6 +85,12 @@ public class OrderTxHandler {
 
         order.completePayment(order.getTid());
         orderRepository.saveAndFlush(order);
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            if (orderItem.getUserCouponId() != null) {
+                couponService.markUserCouponUsed(orderItem.getUserCouponId());
+            }
+        }
 
         try {
             List<Long> orderedItemIds = order.getOrderItems().stream()
