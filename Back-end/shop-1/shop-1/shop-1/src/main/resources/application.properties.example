@@ -1,0 +1,70 @@
+spring.application.name=Shop1
+
+# jwt
+jwt.secret.key=${JWT_SECRET_KEY}
+
+#Local
+# H2 Database
+spring.datasource.url=jdbc:h2:tcp://localhost/~/test
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=update
+
+# SQL
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.use_sql_comments=true
+spring.jpa.properties.hibernate.default_batch_fetch_size=100
+
+# Redis Configuration
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
+app.frontend-url=http://localhost:3000
+# Kakao
+kakao.apikey=${KAKAO_API_KEY}
+kakao.redirect-uri=http://localhost:8080/auth/kakao/callback
+
+# Naver
+naver.client-id=${NAVER_CLIENT_ID}
+naver.client-secret=${NAVER_CLIENT_SECRET}
+naver.redirect-uri=http://localhost:8080/auth/naver/callback
+
+# NCP Object Storage
+spring.s3.accessKey=${NCP_S3_ACCESS_KEY}
+spring.s3.secretKey=${NCP_S3_SECRET_KEY}
+spring.s3.bucket=shop1
+spring.s3.endpoint=https://kr.object.ncloudstorage.com
+spring.s3.region="kr-standard"
+
+# Kakao Pay
+kakaopay.cid=TC0ONETIME
+kakaopay.secret=${KAKAOPAY_SECRET}
+
+# Naver Pay
+naverpay.client-id=${NAVERPAY_CLIENT_ID}
+naverpay.client-secret=${NAVERPAY_CLIENT_SECRET}
+naverpay.chain-id=${NAVERPAY_CHAIN_ID}
+naverpay.partner-id=${NAVERPAY_PARTNER_ID}
+
+# Toss Pay
+toss.client=${TOSS_CLIENT_KEY}
+toss.secret=${TOSS_SECRET_KEY}
+
+# SMTP
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${GMAIL_SMTP_USERNAME}
+spring.mail.password=${GMAIL_SMTP_APP_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+cors.allowed-origins=http://localhost:3000,http://52.78.173.129:3000,http://shop1.cloud,http://www.shop1.cloud
+
+# Copy this file to application.properties (gitignored) and fill in real values,
+# or set the ${VAR} placeholders above as environment variables at runtime.
