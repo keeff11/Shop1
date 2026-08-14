@@ -80,8 +80,40 @@ public class NaverPayService implements PaymentService {
 
     @Override
     public PaymentApproveResponseDTO approve(PaymentApproveRequestDTO req) {
-        log.info("NaverPay Approve logic called for ReserveID: {}", req.getTid());
-        return PaymentApproveResponseDTO.builder().success(true).build();
+        String url = String.format("%s/%s/naverpay/payments/v2/apply/payment", API_URL, partnerId);
+
+        HttpHeaders headers = createHeaders();
+        Map<String, String> params = new HashMap<>();
+        params.put("paymentId", req.getTid());
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+            Map<String, Object> responseBody = response.getBody();
+
+            if (isSuccess(responseBody)) {
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("body");
+                Map<String, Object> detail = (Map<String, Object>) data.get("detail");
+                String admissionState = detail != null ? (String) detail.get("admissionState") : null;
+
+                if (!"SUCCESS".equals(admissionState)) {
+                    log.error("NaverPay Approve Not Admitted: ReserveID={}, admissionState={}", req.getTid(), admissionState);
+                    throw new RuntimeException("네이버페이 결제 승인이 완료되지 않았습니다.");
+                }
+
+                log.info("NaverPay Approve Success: ReserveID={}, PaymentId={}", req.getTid(), data.get("paymentId"));
+                return PaymentApproveResponseDTO.builder().success(true).build();
+            }
+
+            log.error("NaverPay Approve Failed: code={}, message={}",
+                    responseBody != null ? responseBody.get("code") : null,
+                    responseBody != null ? responseBody.get("message") : null);
+            throw new RuntimeException("네이버페이 결제 승인에 실패했습니다.");
+
+        } catch (Exception e) {
+            log.error("NaverPay Approve Communication Error: {}", e.getMessage());
+            throw new RuntimeException("네이버페이 결제 승인 처리 중 오류가 발생했습니다.", e);
+        }
     }
     
     @Override
