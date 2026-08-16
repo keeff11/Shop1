@@ -11,6 +11,7 @@ import com.kkh.shop_1.domain.user.dto.response.LoginResponseDTO;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.*;
 import com.kkh.shop_1.security.jwt.JwtProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ public class UserAuthController {
     private final UserAuthService userAuthService;
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
+    private final NaverService naverService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -64,10 +66,10 @@ public class UserAuthController {
      **/
     @PostMapping("/local/sign-up")
     public ResponseEntity<ApiResponse<LocalSignUpResponseDTO>> signUp(
-            @RequestBody LocalSignUpRequestDTO dto, HttpServletResponse response
+            @RequestBody LocalSignUpRequestDTO dto, HttpServletRequest request, HttpServletResponse response
     ) {
         LocalSignUpResponseDTO result = userAuthService.localSignUp(dto);
-        handleTokenResponse(response, result.getAccessToken(), result.getRefreshToken());
+        handleTokenResponse(request, response, result.getAccessToken(), result.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -78,11 +80,21 @@ public class UserAuthController {
      **/
     @PostMapping("/local/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> localLogin(
-            @RequestBody LocalLoginRequestDTO dto, HttpServletResponse response
+            @RequestBody LocalLoginRequestDTO dto, HttpServletRequest request, HttpServletResponse response
     ) {
         LoginResponseDTO result = userAuthService.localLogin(dto);
-        handleTokenResponse(response, result.getAccessToken(), result.getRefreshToken());
+        handleTokenResponse(request, response, result.getAccessToken(), result.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     *
+     * 네이버 로그인 시작 전 CSRF 방지용 state 발급
+     *
+     **/
+    @GetMapping("/naver/state")
+    public ResponseEntity<ApiResponse<Map<String, String>>> issueNaverState() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("state", naverService.issueState())));
     }
 
     /**
@@ -93,12 +105,13 @@ public class UserAuthController {
     @GetMapping("/{provider}/callback")
     public void socialCallbackWeb(
             @PathVariable String provider, @RequestParam String code,
-            @RequestParam(required = false) String state, HttpServletResponse response
+            @RequestParam(required = false) String state,
+            HttpServletRequest request, HttpServletResponse response
     ) throws IOException {
         AuthResult result = "kakao".equals(provider)
                 ? userAuthService.processKakaoLogin(code)
                 : userAuthService.processNaverLogin(code, state);
-        handleSocialRedirect(response, result, provider);
+        handleSocialRedirect(request, response, result, provider);
     }
 
     /**
@@ -126,10 +139,10 @@ public class UserAuthController {
     @PostMapping("/{provider}/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> socialSignUp(
             @PathVariable String provider, @RequestHeader(HttpHeaders.AUTHORIZATION) String signUpToken,
-            @RequestBody SocialLoginRequestDTO dto, HttpServletResponse response
+            @RequestBody SocialLoginRequestDTO dto, HttpServletRequest request, HttpServletResponse response
     ) {
         LoginResponseDTO result = userAuthService.completeSocialSignUp(provider, signUpToken, dto);
-        handleTokenResponse(response, result.getAccessToken(), result.getRefreshToken());
+        handleTokenResponse(request, response, result.getAccessToken(), result.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -139,8 +152,8 @@ public class UserAuthController {
      *
      **/
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
-        clearAuthCookies(response);
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request, HttpServletResponse response) {
+        clearAuthCookies(request, response);
         return ResponseEntity.ok(ApiResponse.successNoData());
     }
 
@@ -194,20 +207,20 @@ public class UserAuthController {
         return cookieToken;
     }
 
-    private void handleTokenResponse(HttpServletResponse response, String access, String refresh) {
-        setCookie(response, ACCESS_TOKEN, access, 30 * 60);
-        setCookie(response, REFRESH_TOKEN, refresh, 7 * 24 * 60 * 60);
+    private void handleTokenResponse(HttpServletRequest request, HttpServletResponse response, String access, String refresh) {
+        setCookie(request, response, ACCESS_TOKEN, access, 30 * 60);
+        setCookie(request, response, REFRESH_TOKEN, refresh, 7 * 24 * 60 * 60);
     }
 
-    private void clearAuthCookies(HttpServletResponse response) {
-        setCookie(response, ACCESS_TOKEN, "", 0);
-        setCookie(response, REFRESH_TOKEN, "", 0);
+    private void clearAuthCookies(HttpServletRequest request, HttpServletResponse response) {
+        setCookie(request, response, ACCESS_TOKEN, "", 0);
+        setCookie(request, response, REFRESH_TOKEN, "", 0);
     }
 
-    private void setCookie(HttpServletResponse response, String name, String value, long maxAge) {
+    private void setCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, long maxAge) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(false) // 배포 시 true
+                .secure(request.isSecure()) // HTTPS 요청일 때만 Secure 쿠키로 발급
                 .path("/")
                 .maxAge(maxAge)
                 .sameSite("Lax")
@@ -215,10 +228,9 @@ public class UserAuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
-    private void handleSocialRedirect(HttpServletResponse response, AuthResult result, String provider) throws IOException {
+    private void handleSocialRedirect(HttpServletRequest request, HttpServletResponse response, AuthResult result, String provider) throws IOException {
         if (result.isRegistered()) {
-            response.addHeader(HttpHeaders.SET_COOKIE, result.getAccessCookie());
-            response.addHeader(HttpHeaders.SET_COOKIE, result.getRefreshCookie());
+            handleTokenResponse(request, response, result.getAccessToken(), result.getRefreshToken());
             response.sendRedirect(frontendUrl);
         } else {
             response.sendRedirect(String.format("%s/register/social/additional-info?provider=%s&%sToken=%s",

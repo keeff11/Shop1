@@ -34,14 +34,6 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
 
-    private static final String[] WHITELIST = {
-            "/auth/**",
-            "/items/**",
-            "/reviews/items/**",
-            "/error",
-            "/favicon.ico"
-    };
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -51,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
-                        .requestMatchers(WHITELIST).permitAll() // 위에서 정의한 경로만 누구나 접근 가능
+                        .requestMatchers(SecurityWhitelist.PATHS).permitAll() // 위에서 정의한 경로만 누구나 접근 가능
                         .anyRequest().authenticated()           // 나머지는 모두 인증(로그인) 필요
                 )
                 .addFilterBefore(
@@ -71,8 +63,8 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 유연한 CORS 설정 적용
-        config.setAllowedOriginPatterns(Arrays.asList("*"));
+        // 허용된 오리진만 자격증명(쿠키) 포함 요청을 보낼 수 있도록 제한
+        config.setAllowedOriginPatterns(allowedOrigins);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

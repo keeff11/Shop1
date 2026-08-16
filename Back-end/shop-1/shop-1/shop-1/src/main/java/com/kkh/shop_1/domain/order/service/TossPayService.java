@@ -1,6 +1,7 @@
 package com.kkh.shop_1.domain.order.service;
 
 import com.kkh.shop_1.domain.order.dto.*;
+import com.kkh.shop_1.domain.order.entity.Order;
 import com.kkh.shop_1.domain.order.entity.PaymentType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,43 @@ public class TossPayService implements PaymentService {
         } catch (Exception e) {
             log.error("시스템 에러: {}", e.getMessage());
             throw new RuntimeException("결제 승인 중 알 수 없는 오류 발생", e);
+        }
+    }
+
+    /**
+     * 토스 결제 상태 조회 (orderId 기준). approve() 호출 직후 서버가 죽어 우리 DB에 반영되지 못한 결제를
+     * 정합성 배치가 나중에 복구할 수 있도록 실제 토스 쪽 상태를 확인한다.
+     * https://docs.tosspayments.com/reference#단건-결제-조회 (orderId로 조회)
+     */
+    @Override
+    public PaymentStatus inquire(Order order) {
+        String url = "https://api.tosspayments.com/v1/payments/orders/" + order.getTid();
+
+        HttpHeaders headers = new HttpHeaders();
+        String encodedAuth = Base64.getEncoder().encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+        headers.set("Authorization", "Basic " + encodedAuth);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+            Map<String, Object> body = response.getBody();
+            String status = body != null ? (String) body.get("status") : null;
+
+            if ("DONE".equals(status)) {
+                return PaymentStatus.PAID;
+            }
+            if ("CANCELED".equals(status) || "ABORTED".equals(status) || "EXPIRED".equals(status) || "PARTIAL_CANCELED".equals(status)) {
+                return PaymentStatus.NOT_PAID;
+            }
+            // READY, IN_PROGRESS 등: 아직 결론이 안 난 상태이므로 다음 주기에 다시 확인
+            log.warn("토스 결제 상태 미확정. orderId={}, status={}", order.getTid(), status);
+            return PaymentStatus.UNKNOWN;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            // 승인 시도 자체가 토스에 남아있지 않음 = 결제된 적 없음
+            return PaymentStatus.NOT_PAID;
+        } catch (Exception e) {
+            log.error("토스 결제 상태 조회 실패. orderId={}", order.getTid(), e);
+            return PaymentStatus.UNKNOWN;
         }
     }
 

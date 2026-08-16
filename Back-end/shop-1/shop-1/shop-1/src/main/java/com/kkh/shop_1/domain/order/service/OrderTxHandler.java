@@ -5,10 +5,12 @@ import com.kkh.shop_1.domain.coupon.entity.UserCoupon;
 import com.kkh.shop_1.domain.coupon.service.CouponService;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.service.ItemService;
+import com.kkh.shop_1.domain.order.dto.OrderPaidEventPayload;
 import com.kkh.shop_1.domain.order.dto.OrderRequestDTO;
 import com.kkh.shop_1.domain.order.entity.Order;
 import com.kkh.shop_1.domain.order.entity.OrderItem;
 import com.kkh.shop_1.domain.order.repository.OrderRepository;
+import com.kkh.shop_1.domain.outbox.service.OutboxEventService;
 import com.kkh.shop_1.domain.user.entity.Address;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.AddressService;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +32,7 @@ public class OrderTxHandler {
     private final CouponService couponService;
     private final OrderRepository orderRepository;
     private final CartItemService cartItemService;
+    private final OutboxEventService outboxEventService;
 
     @Transactional
     public Address getOrCreateAddress(User user, OrderRequestDTO dto) {
@@ -85,6 +89,13 @@ public class OrderTxHandler {
 
         order.completePayment(order.getTid());
         orderRepository.saveAndFlush(order);
+
+        outboxEventService.record("ORDER_PAID", OrderPaidEventPayload.builder()
+                .orderId(order.getId())
+                .userId(userId)
+                .totalAmount(order.getTotalAmount())
+                .paidAt(LocalDateTime.now())
+                .build());
 
         for (OrderItem orderItem : order.getOrderItems()) {
             if (orderItem.getUserCouponId() != null) {

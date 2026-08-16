@@ -24,6 +24,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class S3Service {
+
+    private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
+    private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp"
+    );
 
     @Value("${spring.s3.endpoint}")
     private String endPoint;
@@ -64,14 +70,21 @@ public class S3Service {
      *
      */
     public String uploadImage(String folderPath, MultipartFile image) throws IOException {
-        String extension = extractExtension(image.getOriginalFilename());
-        String key = createKey(folderPath, extension);
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 이미지가 없습니다.");
+        }
+        if (image.getSize() > MAX_IMAGE_SIZE_BYTES) {
+            throw new IllegalArgumentException("이미지 파일 크기는 10MB를 초과할 수 없습니다.");
+        }
 
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(image.getSize());
-        metadata.setContentType(image.getContentType());
+        // 클라이언트가 보낸 파일명/Content-Type을 신뢰하지 않고, 실제 파일 내용으로 이미지 여부를 검증한다.
+        byte[] bytes = image.getBytes();
+        String contentType = tika.detect(bytes);
+        if (!ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("이미지 파일(jpg, png, gif, webp)만 업로드할 수 있습니다.");
+        }
 
-        return uploadToS3(key, image.getInputStream(), metadata);
+        return uploadImageFromBytes(folderPath, bytes);
     }
 
     /**
@@ -169,13 +182,6 @@ public class S3Service {
 
     private String createKey(String folderPath, String extension) {
         return folderPath + "/" + UUID.randomUUID() + extension;
-    }
-
-    private String extractExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf("."));
     }
 
     private String getExtensionFromContentType(String contentType) {

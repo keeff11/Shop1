@@ -185,8 +185,8 @@ public class ItemController {
      *
      */
     @PostMapping("/search/sync")
-    public ResponseEntity<ApiResponse<String>> syncToElasticsearch() {
-        itemSearchService.syncItemsToElasticsearch();
+    public ResponseEntity<ApiResponse<String>> syncToElasticsearch(@AuthenticationPrincipal Long userId) {
+        itemSearchService.syncItemsToElasticsearch(userId);
         return ResponseEntity.ok(ApiResponse.success("Elasticsearch 데이터 동기화 완료"));
     }
 

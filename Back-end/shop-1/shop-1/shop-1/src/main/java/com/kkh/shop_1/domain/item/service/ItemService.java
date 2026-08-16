@@ -1,13 +1,15 @@
 package com.kkh.shop_1.domain.item.service;
 
-import com.kkh.shop_1.common.annotation.DistributedLock;
 import com.kkh.shop_1.common.s3.S3Service;
+import com.kkh.shop_1.common.util.ChosungUtils;
+import com.kkh.shop_1.domain.item.document.ItemDocument;
 import com.kkh.shop_1.domain.item.dto.*;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
 import com.kkh.shop_1.domain.item.entity.ItemImage;
 import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
+import com.kkh.shop_1.domain.item.repository.ItemSearchRepository;
 import com.kkh.shop_1.domain.user.entity.User;
 import com.kkh.shop_1.domain.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,20 +26,19 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,6 +46,7 @@ import java.util.Set;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final ItemSearchRepository itemSearchRepository;
     private final UserService userService;
     private final S3Service s3Service;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -55,11 +57,12 @@ public class ItemService {
      * 상품 등록
      *
      */
+    @Transactional
     @CacheEvict(value = "items", key = "'all'")
     public Long createItem(CreateItemRequestDTO createItemRequestDTO,
                            List<MultipartFile> images,
                            Long sellerId) {
-        validateRequest(createItemRequestDTO);
+        validatePriceAndQuantity(createItemRequestDTO.getPrice(), createItemRequestDTO.getQuantity());
 
         User seller = userService.findById(sellerId);
         Item item = convertToEntity(createItemRequestDTO, seller);
@@ -67,6 +70,7 @@ public class ItemService {
         item.setStatus(ItemStatus.SELLING);
         itemRepository.save(item);
         processItemImages(item, images);
+        syncToSearchIndexAfterCommit(item);
 
         return item.getId();
     }
@@ -76,11 +80,14 @@ public class ItemService {
      * 상품 수정
      *
      */
+    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "items", key = "'all'"),       // 목록 캐시 삭제
             @CacheEvict(value = "item:detail", key = "#itemId") // 상세 캐시 삭제
     })
     public Long updateItem(Long itemId, UpdateItemRequestDTO request, List<MultipartFile> newImages, Long sellerId) {
+        validatePriceAndQuantity(request.getPrice(), request.getQuantity());
+
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
@@ -107,6 +114,7 @@ public class ItemService {
             processItemImages(item, newImages);
         }
 
+        syncToSearchIndexAfterCommit(item);
         return item.getId();
     }
 
@@ -115,6 +123,7 @@ public class ItemService {
      * 상품 삭제
      *
      */
+    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "items", key = "'all'"),
             @CacheEvict(value = "item:detail", key = "#itemId")
@@ -129,6 +138,7 @@ public class ItemService {
 
         item.setStatus(ItemStatus.DELETED);
         log.info("상품 논리 삭제 완료 (ID: {})", itemId);
+        removeFromSearchIndexAfterCommit(itemId);
     }
 
     /**
@@ -248,12 +258,52 @@ public class ItemService {
         }
     }
 
-    private void validateRequest(CreateItemRequestDTO request) {
-        if (request.getPrice() <= 0) {
+    private void validatePriceAndQuantity(int price, int quantity) {
+        if (price <= 0) {
             throw new IllegalArgumentException("상품 가격은 0원보다 커야 합니다.");
         }
-        if (request.getQuantity() < 0) {
+        if (quantity < 0) {
             throw new IllegalArgumentException("상품 수량은 0개 이상이어야 합니다.");
+        }
+    }
+
+    /**
+     *
+     * 트랜잭션 커밋 후 Elasticsearch 색인을 갱신한다. (롤백 시 색인에 반영되지 않도록 커밋 이후로 지연)
+     *
+     */
+    private void syncToSearchIndexAfterCommit(Item item) {
+        Long itemId = item.getId();
+        String name = item.getName();
+        runAfterCommit(() -> {
+            try {
+                itemSearchRepository.save(ItemDocument.from(item, ChosungUtils.extract(name)));
+            } catch (Exception e) {
+                log.error("Elasticsearch 색인 동기화 실패. ItemID: {}", itemId, e);
+            }
+        });
+    }
+
+    private void removeFromSearchIndexAfterCommit(Long itemId) {
+        runAfterCommit(() -> {
+            try {
+                itemSearchRepository.deleteById(itemId);
+            } catch (Exception e) {
+                log.error("Elasticsearch 색인 삭제 실패. ItemID: {}", itemId, e);
+            }
+        });
+    }
+
+    private void runAfterCommit(Runnable task) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    task.run();
+                }
+            });
+        } else {
+            task.run();
         }
     }
 

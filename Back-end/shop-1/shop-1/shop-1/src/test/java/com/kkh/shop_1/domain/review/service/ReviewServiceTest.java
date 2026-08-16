@@ -2,6 +2,7 @@ package com.kkh.shop_1.domain.review.service;
 
 import com.kkh.shop_1.common.s3.S3Service;
 import com.kkh.shop_1.domain.item.entity.Item;
+import com.kkh.shop_1.domain.order.entity.Order;
 import com.kkh.shop_1.domain.order.entity.OrderItem;
 import com.kkh.shop_1.domain.order.service.OrderService;
 import com.kkh.shop_1.domain.review.dto.ReviewRequestDto;
@@ -58,10 +59,14 @@ class ReviewServiceTest {
         User user = mock(User.class);
         Item item = mock(Item.class);
         OrderItem orderItem = mock(OrderItem.class);
+        Order order = mock(Order.class);
         Review review = mock(Review.class);
 
         given(orderService.findByOrderItemId(orderItemId)).willReturn(Optional.of(orderItem));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(orderItem.getOrder()).willReturn(order);
+        given(order.getUser()).willReturn(user);
+        given(user.getId()).willReturn(userId);
         given(orderItem.getItem()).willReturn(item);
         given(reviewRepository.save(any(Review.class))).willReturn(review);
         given(review.getId()).willReturn(100L);
@@ -92,6 +97,31 @@ class ReviewServiceTest {
     }
 
     @Test
+    @DisplayName("리뷰 등록 실패 - 본인이 주문하지 않은 상품")
+    void createReview_Fail_NotOwner() {
+        // given
+        Long orderItemId = 1L;
+        Long userId = 1L;
+        Long actualOwnerId = 2L;
+        ReviewRequestDto dto = new ReviewRequestDto(5, "좋아요");
+        List<MultipartFile> images = Collections.emptyList();
+
+        OrderItem orderItem = mock(OrderItem.class);
+        Order order = mock(Order.class);
+        User actualOwner = mock(User.class);
+
+        given(orderService.findByOrderItemId(orderItemId)).willReturn(Optional.of(orderItem));
+        given(orderItem.getOrder()).willReturn(order);
+        given(order.getUser()).willReturn(actualOwner);
+        given(actualOwner.getId()).willReturn(actualOwnerId);
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.createReview(orderItemId, userId, dto, images))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("본인이 주문한 상품에만 리뷰를 작성할 수 있습니다.");
+    }
+
+    @Test
     @DisplayName("리뷰 등록 실패 - 사용자 없음")
     void createReview_Fail_NoUser() {
         // given
@@ -100,8 +130,13 @@ class ReviewServiceTest {
         ReviewRequestDto dto = new ReviewRequestDto(5, "좋아요");
         List<MultipartFile> images = Collections.emptyList();
         OrderItem orderItem = mock(OrderItem.class);
+        Order order = mock(Order.class);
+        User orderOwner = mock(User.class);
 
         given(orderService.findByOrderItemId(orderItemId)).willReturn(Optional.of(orderItem));
+        given(orderItem.getOrder()).willReturn(order);
+        given(order.getUser()).willReturn(orderOwner);
+        given(orderOwner.getId()).willReturn(userId); // 주문 소유자 검증은 통과시키고, "사용자 없음" 케이스만 검증
         given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         // when & then

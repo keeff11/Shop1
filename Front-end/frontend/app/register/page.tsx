@@ -50,12 +50,15 @@ export default function RegisterPage() {
   /**
    * * 네이버 로그인 핸들러
    * **/
-  const handleNaverLogin = () => {
+  const handleNaverLogin = async () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID!;
     const REDIRECT_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
     const REDIRECT_URI = encodeURIComponent(`${REDIRECT_BASE}/auth/naver/callback`);
-    const STATE = Math.random().toString(36).substring(2, 15);
-    
+
+    // CSRF 방지를 위해 state는 서버가 발급한 값을 사용한다.
+    const res: any = await fetchApi("/auth/naver/state");
+    const STATE = res.data.state;
+
     const naverAuthUrl = `${process.env.NEXT_PUBLIC_NAVER_AUTH_URL}/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}`;
     window.location.href = naverAuthUrl;
   };

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { API_BASE } from "../../../../config/api";
@@ -18,16 +18,28 @@ export default function NaverLoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [naverAuthUrl, setNaverAuthUrl] = useState<string | null>(null);
   const isRequesting = useRef(false);
 
-  const STATE_STRING = Math.random().toString(36).substring(2, 15);
-  
-  const naverAuthUrl =
-    `https://nid.naver.com/oauth2.0/authorize` +
-    `?response_type=code` +
-    `&client_id=${NAVER_ID}` +
-    `&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}` +
-    `&state=${STATE_STRING}`;
+  // CSRF 방지를 위해 state는 서버가 발급한 값을 사용한다.
+  useEffect(() => {
+    axios.get(`${API_BASE}/auth/naver/state`)
+      .then((res) => {
+        const state = res.data.data.state;
+        setNaverAuthUrl(
+          `https://nid.naver.com/oauth2.0/authorize` +
+          `?response_type=code` +
+          `&client_id=${NAVER_ID}` +
+          `&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}` +
+          `&state=${state}`
+        );
+      })
+      .catch((error) => {
+        console.error("Naver state 발급 실패:", error.response?.data || error.message);
+        Alert.alert("오류", "로그인을 시작할 수 없습니다.");
+        router.back();
+      });
+  }, []);
 
   const handleLogin = async (code: string, state: string) => {
     if (isRequesting.current) return;
@@ -50,7 +62,7 @@ export default function NaverLoginScreen() {
         return;
       }
 
-      if (data.isRegistered || data.accessToken) {
+      if (data.registered || data.accessToken) {
         if (data.accessToken) {
           await login(data.accessToken); 
         }
@@ -105,15 +117,17 @@ export default function NaverLoginScreen() {
 
   return (
     <View style={styles.container}>
-      <WebView
-        style={{ flex: 1, display: isLoading ? 'none' : 'flex' }}
-        source={{ uri: naverAuthUrl }}
-        userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36"
-        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        incognito={true}
-      />
+      {naverAuthUrl && (
+        <WebView
+          style={{ flex: 1, display: isLoading ? 'none' : 'flex' }}
+          source={{ uri: naverAuthUrl }}
+          userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36"
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          incognito={true}
+        />
+      )}
 
-      {isLoading && (
+      {(isLoading || !naverAuthUrl) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#03C75A" />
         </View>

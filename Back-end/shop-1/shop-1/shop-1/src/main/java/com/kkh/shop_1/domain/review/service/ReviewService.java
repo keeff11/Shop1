@@ -44,8 +44,16 @@ public class ReviewService {
         OrderItem orderItem = orderService.findByOrderItemId(orderItemId)
                 .orElseThrow(() -> new IllegalArgumentException("주문 내역이 존재하지 않습니다."));
 
+        if (!orderItem.getOrder().getUser().getId().equals(userId)) {
+            throw new IllegalStateException("본인이 주문한 상품에만 리뷰를 작성할 수 있습니다.");
+        }
+
         if (orderItem.isReviewWritten()) {
             throw new IllegalStateException("이미 리뷰를 작성한 상품입니다.");
+        }
+
+        if (dto.getRating() < 1 || dto.getRating() > 5) {
+            throw new IllegalArgumentException("평점은 1점에서 5점 사이여야 합니다.");
         }
 
         User user = userRepository.findById(userId)

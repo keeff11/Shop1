@@ -123,3 +123,37 @@ Shop1 프로젝트 개발 및 운영 과정에서 발생한 주요 기술적 이
 
 * JMeter 100명 동시 접속(100 Threads) 테스트 환경에서 커넥션 에러 및 병목 현상을 원천 차단하여 **성공률 100% 달성**.
 * `Spin Lock`으로 인한 Redis 서버 부하 없이, `Pub/Sub` 메커니즘을 통한 효율적인 동시성 제어 및 완벽한 재고 데이터 정합성(Lost Update 방지) 보장.
+
+---
+
+## 📌 Issue 6: [Consistency] PG 승인 이후 상태 미반영 위험 해결 (Outbox 패턴 + 정합성 배치) *(2026-08-15)*
+
+### 1. 문제 상황 (Problem)
+
+* Issue 5에서 동시 트래픽 상황의 안정성은 확보했지만, 별도로 다음 두 가지 정합성 위험이 남아있음을 검토 과정에서 확인함.
+  1. **PG 승인 성공 + 서버 장애:** `OrderService.approveOrder()`에서 PG사 `approve()` 호출은 트랜잭션 밖(순서상 먼저) 실행되고, 그 다음에야 `OrderTxHandler.completeOrderPayment()`(`@Transactional`)가 상태를 `PAID`로 커밋함. PG 승인이 성공한 직후, 이 트랜잭션이 커밋되기 전에 서버가 죽으면 PG에는 결제가 남지만 우리 DB는 `PAYMENT_PENDING`으로 영구히 방치됨.
+  2. **커밋 이후 후속 처리(알림 등) 유실:** 상태 변경(DB 커밋)과 그 결과를 알리는 부수 작업(알림 발송 등)이 분리되어 있을 경우, DB 커밋은 성공했는데 그 직후 서버가 죽으면 알림 발행 자체가 유실될 수 있음.
+
+### 2. 원인 분석 (Root Cause Analysis)
+
+* 두 문제는 **서로 다른 실패 시점**을 가리키므로 하나의 장치로 동시에 해결할 수 없음을 확인함.
+  * (1)은 "DB 커밋 자체가 안 된 경우" — 로컬 트랜잭션만으로는 원천적으로 막을 수 없고, 외부 시스템(PG)과 우리 DB의 상태를 사후에 대조하는 절차가 필요함.
+  * (2)는 "DB 커밋은 됐지만 그 결과를 알리는 절차가 유실된 경우" — 상태 변경과 이벤트 기록을 같은 트랜잭션으로 묶어야 해결됨(Outbox 패턴의 전형적인 적용 범위).
+
+### 3. 해결 과정 (Solution)
+
+1. **Outbox 패턴 적용 ((2) 해결):** `outbox_event` 테이블을 추가하고, 결제 완료 트랜잭션(`OrderTxHandler.completeOrderPayment`) 안에서 상태 변경과 이벤트 기록을 함께 커밋. `@TransactionalEventListener(phase = AFTER_COMMIT)`으로 커밋 직후 즉시 발행을 시도하고, 즉시 발행이 실패하거나 애플리케이션 재시작으로 시도 자체가 누락된 경우를 대비해 `@Scheduled` 폴링 배치를 이중 안전장치로 추가함. 발행 실패는 재시도 횟수를 기록하고 일정 횟수 이상이면 `FAILED`로 확정.
+2. **PG 재조회 기반 정합성 배치 추가 ((1) 해결):** `PaymentService`에 `inquire(Order)`를 추가해 PG사(Kakao/Toss/Naver) 기준의 실제 결제 상태를 조회할 수 있게 함. `PAYMENT_PENDING` 상태로 10분 이상 방치된 주문을 5분 주기로 스캔해, PG가 결제완료 상태면 `completeOrderPayment`로 복구(자연스럽게 Outbox 이벤트도 함께 기록됨), PG도 미결제 상태면 재고를 복구하고 주문을 취소 처리함. Issue 5의 교훈을 그대로 적용해, PG 상태 조회(외부 I/O)는 트랜잭션 밖에서 수행하고 DB 반영만 별도의 짧은 트랜잭션으로 처리함.
+
+### 4. 결과 (Result)
+
+* "PG 승인 성공 후 서버 장애"와 "커밋 후 알림 유실"이라는, 서로 다른 두 실패 시나리오를 각각 정확히 대응하는 장치로 분리해 해결함.
+* 두 기능 모두 단위 테스트로 검증(Outbox 9건, 멱등성 5건, 정합성 배치/PG 조회 14건 — 총 28건, 전부 통과 확인).
+* 다만 정합성 배치는 폴링 주기(최대 15분)만큼 지연이 있고, Outbox 발행은 "최소 한 번(at-least-once)" 보장이라 수신 측 멱등 처리가 별도로 필요함 — 완전한 실시간 강한 일관성은 아니라는 한계는 명확히 인지하고 있음.
+
+### 5. 검증 중 추가로 발견한 버그: AFTER_COMMIT 리스너와 트랜잭션 전파
+
+* **현상:** 단위 테스트(Mock 기반)는 모두 통과했지만, 실제 DB + 실제 SMTP로 전체 흐름(`completeOrderPayment` → outbox 기록 → 커밋 → 즉시 발행)을 종단 간(end-to-end)으로 검증하는 과정에서, 이메일은 실제로 정상 발송되는데도 `outbox_event`의 상태가 DB에는 계속 `PENDING`으로 남는 현상을 발견함. `event.markPublished()` 호출은 물론, `outboxEventRepository.save(event)`를 명시적으로 추가해도 커밋되지 않음.
+* **원인 분석:** `OutboxEventService.tryPublish()`가 `@Transactional`(기본 propagation `REQUIRED`)이었는데, 이 메서드가 `@TransactionalEventListener(phase = AFTER_COMMIT)` 콜백 안에서 호출되는 구조였음. AFTER_COMMIT 시점엔 원본 트랜잭션이 물리적으로는 이미 커밋됐지만, 스프링의 트랜잭션 동기화 컨텍스트(`TransactionSynchronizationManager`)는 `afterCompletion` 단계 전까지 아직 유지됨. 기본 `REQUIRED` 전파는 이 상태를 "기존(이미 끝난) 트랜잭션에 참여"하는 것으로 처리해, 여기서 변경한 상태가 실제로는 물리적으로 커밋되지 않고 유실됨.
+* **해결:** `tryPublish()`를 `@Transactional(propagation = Propagation.REQUIRES_NEW)`로 변경해, AFTER_COMMIT 콜백 안에서도 완전히 독립된 물리 트랜잭션이 열리도록 강제함.
+* **파급 효과:** 이 버그가 그대로 있었다면, 폴링 스케줄러(`OutboxPollingScheduler`)가 이미 발송된 이벤트를 계속 `PENDING`으로 잘못 인식해 5분마다 같은 알림을 반복 발송했을 것 — 단위 테스트만으로는 발견하지 못하고, 실제 트랜잭션 커밋/AFTER_COMMIT 타이밍이 개입되는 종단 간 검증에서만 드러난 문제였음.

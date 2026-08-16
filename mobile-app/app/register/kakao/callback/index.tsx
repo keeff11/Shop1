@@ -47,7 +47,7 @@ import { useAuth } from "../../../../contexts/AuthContext";
           return;
         }
 
-        if (data.isRegistered || data.accessToken) {
+        if (data.registered || data.accessToken) {
           // 기존 가입된 회원
           if (data.accessToken) {
             await login(data.accessToken); 

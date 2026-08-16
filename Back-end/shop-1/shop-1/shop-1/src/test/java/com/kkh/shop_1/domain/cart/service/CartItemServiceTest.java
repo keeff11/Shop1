@@ -64,7 +64,7 @@ class CartItemServiceTest {
 
             // User와 Item을 빌더 없이 생성
             User user = mock(User.class);
-            Item item = Item.builder().name("테스트상품").build();
+            Item item = Item.builder().name("테스트상품").quantity(100).build();
             ReflectionTestUtils.setField(item, "id", 100L);
 
             given(userService.findById(userId)).willReturn(user);
@@ -87,7 +87,7 @@ class CartItemServiceTest {
             CartItemAddRequestDTO request = new CartItemAddRequestDTO(100L, 3);
 
             User user = mock(User.class);
-            Item item = Item.builder().name("테스트상품").build();
+            Item item = Item.builder().name("테스트상품").quantity(100).build();
             ReflectionTestUtils.setField(item, "id", 100L);
 
             // CartItem 생성 시에도 Mock User 전달

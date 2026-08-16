@@ -1,6 +1,7 @@
 package com.kkh.shop_1.domain.order.service;
 
 import com.kkh.shop_1.domain.order.dto.*;
+import com.kkh.shop_1.domain.order.entity.Order;
 import com.kkh.shop_1.domain.order.entity.PaymentType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class KakaoPayService implements PaymentService {
     private static final String READY_URL = "https://open-api.kakaopay.com/online/v1/payment/ready";
     private static final String APPROVE_URL = "https://open-api.kakaopay.com/online/v1/payment/approve";
     private static final String CANCEL_URL = "https://open-api.kakaopay.com/online/v1/payment/cancel";
+    private static final String ORDER_URL = "https://open-api.kakaopay.com/online/v1/payment/order";
 
     @Override
     public PaymentType getPaymentType() {
@@ -79,6 +81,44 @@ public class KakaoPayService implements PaymentService {
         } catch (Exception e) {
             log.error("KakaoPay Approve Failed: {}", e.getMessage());
             throw new RuntimeException("결제 승인 과정에서 오류가 발생했습니다.", e);
+        }
+    }
+
+    /**
+     * 카카오페이 결제 주문 조회 (cid + tid 기준). approve() 호출 직후 서버가 죽어 우리 DB에 반영되지 못한
+     * 결제를 정합성 배치가 나중에 복구할 수 있도록 실제 카카오 쪽 상태를 확인한다.
+     *
+     * 실제 호출로 확인함: 이 엔드포인트는 GET+쿼리파라미터가 아니라 POST+JSON body만 받는다
+     * (GET으로 보내면 -404 "리소스 미존재" 응답).
+     */
+    @Override
+    public PaymentStatus inquire(Order order) {
+        HttpHeaders headers = createHeaders();
+
+        Map<String, String> params = new HashMap<>();
+        params.put("cid", cid);
+        params.put("tid", order.getTid());
+
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(ORDER_URL, entity, Map.class);
+            Map<String, Object> body = response.getBody();
+            String status = body != null ? (String) body.get("status") : null;
+
+            if ("SUCCESS_PAYMENT".equals(status)) {
+                return PaymentStatus.PAID;
+            }
+            if ("READY".equals(status)) {
+                // 아직 결제 진행 중일 수 있음 -> 다음 주기에 다시 확인
+                return PaymentStatus.UNKNOWN;
+            }
+            // CANCEL_PAYMENT, PART_CANCEL_PAYMENT, QUIT_PAYMENT 등
+            return PaymentStatus.NOT_PAID;
+
+        } catch (Exception e) {
+            log.error("카카오페이 결제 상태 조회 실패. tid={}", order.getTid(), e);
+            return PaymentStatus.UNKNOWN;
         }
     }
 

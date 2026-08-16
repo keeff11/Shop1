@@ -43,6 +43,14 @@ public class CartItemService {
         Item item = itemRepository.findById(request.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
+        int existingQuantity = cartItemRepository.findByUserAndItemId(user, item.getId())
+                .map(CartItem::getQuantity)
+                .orElse(0);
+
+        if (existingQuantity + request.getQuantity() > item.getQuantity()) {
+            throw new IllegalStateException("재고가 부족합니다. 남은 수량: " + item.getQuantity());
+        }
+
         cartItemRepository.findByUserAndItemId(user, item.getId())
                 .ifPresentOrElse(
                         existingItem -> existingItem.increaseQuantity(request.getQuantity()),

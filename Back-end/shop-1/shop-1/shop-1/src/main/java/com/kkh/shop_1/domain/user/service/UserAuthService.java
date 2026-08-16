@@ -10,6 +10,7 @@ import com.kkh.shop_1.domain.user.dto.response.LoginResponseDTO;
 import com.kkh.shop_1.domain.user.entity.Address;
 import com.kkh.shop_1.domain.user.entity.LoginType;
 import com.kkh.shop_1.domain.user.entity.User;
+import com.kkh.shop_1.domain.user.entity.UserRole;
 import com.kkh.shop_1.domain.user.repository.UserRepository;
 import com.kkh.shop_1.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class UserAuthService {
     private final PasswordEncoder passwordEncoder;
     private final KakaoService kakaoService;
     private final NaverService naverService;
+    private final EmailService emailService;
 
     /**
      *
@@ -41,12 +43,13 @@ public class UserAuthService {
     @Transactional
     public LocalSignUpResponseDTO localSignUp(LocalSignUpRequestDTO dto) {
         validateDuplicate(dto.getEmail(), dto.getNickname());
+        emailService.consumeVerifiedEmail(dto.getEmail());
 
         User user = User.createLocalUser(
                 dto.getEmail(),
                 passwordEncoder.encode(dto.getPassword()),
                 dto.getNickname(),
-                dto.getUserRole()
+                resolveSelfServiceRole(dto.getUserRole())
         );
 
         registerUserWithAddress(user, dto);
@@ -104,13 +107,14 @@ public class UserAuthService {
     public LoginResponseDTO completeSocialSignUp(String provider, String signUpToken, SocialLoginRequestDTO dto) {
         LoginType type = LoginType.valueOf(provider.toUpperCase());
         User user;
+        UserRole role = resolveSelfServiceRole(dto.getUserRole());
 
         if (type == LoginType.KAKAO) {
             KakaoUserInfoDTO info = jwtProvider.parseKakaoSignUpToken(signUpToken);
-            user = User.createSocialUser(type, String.valueOf(info.getSocialId()), info.getEmail(), dto.getNickname(), info.getProfileImage(), dto.getUserRole());
+            user = User.createSocialUser(type, String.valueOf(info.getSocialId()), info.getEmail(), dto.getNickname(), info.getProfileImage(), role);
         } else {
             NaverUserInfoDTO info = jwtProvider.parseNaverSignUpToken(signUpToken);
-            user = User.createSocialUser(type, info.getSocialId(), info.getEmail(), dto.getNickname(), info.getProfileImage(), dto.getUserRole());
+            user = User.createSocialUser(type, info.getSocialId(), info.getEmail(), dto.getNickname(), info.getProfileImage(), role);
         }
 
         registerUserWithAddress(user, dto);
@@ -180,5 +184,15 @@ public class UserAuthService {
     private void validateDuplicate(String email, String nickname) {
         if (checkEmailDuplicate(email)) throw new IllegalStateException("이미 존재하는 이메일입니다.");
         if (checkNicknameDuplicate(nickname)) throw new IllegalStateException("이미 존재하는 닉네임입니다.");
+    }
+
+    /**
+     *
+     * 회원가입 시 클라이언트가 요청한 역할을 그대로 신뢰하지 않고,
+     * 셀프 서비스로 가입 가능한 SELLER/CUSTOMER만 허용한다. (ADMIN 승격 방지)
+     *
+     */
+    private UserRole resolveSelfServiceRole(UserRole requestedRole) {
+        return requestedRole == UserRole.SELLER ? UserRole.SELLER : UserRole.CUSTOMER;
     }
 }
