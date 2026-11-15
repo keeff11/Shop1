@@ -19,6 +19,8 @@ public class OrderResponseDTO {
     private String redirectUrl;
     private LocalDateTime orderDate;
     private PaymentType paymentType;
+    // 서버가 계산한 실제 결제 금액. PG 결제창(토스 SDK 등)에는 클라이언트 계산값이 아니라 이 값을 넘긴다.
+    private Integer totalAmount;
 
     // ===== 배송지 정보 =====
     private Long addressId;
@@ -34,6 +36,8 @@ public class OrderResponseDTO {
                 .tid(paymentResponseDTO.getTid())
                 .redirectUrl(paymentResponseDTO.getRedirectUrl())
                 .orderDate(order.getOrderDate())
+                .paymentType(order.getPaymentType())
+                .totalAmount(order.getTotalAmount())
                 .addressId(address.getId())
                 .zipCode(address.getZipCode())
                 .roadAddress(address.getRoadAddress())

@@ -1,7 +1,9 @@
 package com.kkh.shop_1.domain.item.service;
 
+import com.kkh.shop_1.domain.item.document.ItemDocument;
 import com.kkh.shop_1.domain.item.entity.Item;
 import com.kkh.shop_1.domain.item.entity.ItemCategory;
+import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.item.repository.ItemSearchRepository;
 import com.kkh.shop_1.domain.user.entity.User;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,6 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -139,6 +143,41 @@ class ItemSearchServiceTest {
             verify(itemSearchRepository, times(1)).deleteAll();
             verify(itemSearchRepository, times(1)).saveAll(anyList());
             verifyNoInteractions(userService);
+        }
+
+        @Test
+        @DisplayName("삭제(DELETED)된 상품은 색인하지 않는다")
+        void syncItemsToElasticsearch_excludesDeletedItems() {
+            // given
+            Item selling = Item.builder()
+                    .name("판매상품")
+                    .price(10000)
+                    .quantity(5)
+                    .itemCategory(ItemCategory.ELECTRONICS)
+                    .seller(mock(User.class))
+                    .build();
+            ReflectionTestUtils.setField(selling, "id", 300L);
+            ReflectionTestUtils.setField(selling, "status", ItemStatus.SELLING);
+
+            Item deleted = Item.builder()
+                    .name("삭제상품")
+                    .price(10000)
+                    .quantity(5)
+                    .itemCategory(ItemCategory.ELECTRONICS)
+                    .seller(mock(User.class))
+                    .build();
+            ReflectionTestUtils.setField(deleted, "id", 301L);
+            ReflectionTestUtils.setField(deleted, "status", ItemStatus.DELETED);
+
+            given(itemRepository.findAll()).willReturn(List.of(selling, deleted));
+
+            // when
+            itemSearchService.syncItemsToElasticsearch();
+
+            // then
+            ArgumentCaptor<List<ItemDocument>> captor = ArgumentCaptor.forClass(List.class);
+            verify(itemSearchRepository).saveAll(captor.capture());
+            assertThat(captor.getValue()).extracting(ItemDocument::getId).containsExactly(300L);
         }
     }
 }

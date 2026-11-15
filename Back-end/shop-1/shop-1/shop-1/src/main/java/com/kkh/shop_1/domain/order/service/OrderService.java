@@ -141,17 +141,20 @@ public class OrderService {
                 .partnerUserId(userId.toString())
                 .pgToken(dto.getPg_token())
                 .paymentKey(dto.getPaymentKey())
+                .paymentId(dto.getPaymentId())
                 .amount(totalAmount)
                 .build();
 
-        paymentServiceFactory.getService(order.getPaymentType()).approve(approveRequest);
+        PaymentService paymentService = paymentServiceFactory.getService(order.getPaymentType());
+        PaymentApproveResponseDTO approveResponse = paymentService.approve(approveRequest);
 
         try {
             orderTxHandler.completeOrderPayment(order.getId(), userId);
         } catch (Exception e) {
             log.error("DB 결제 상태 업데이트 실패. 결제 취소를 진행합니다. orderId: {}", order.getId(), e);
-            paymentServiceFactory.getService(order.getPaymentType())
-                    .cancel(dto.getPaymentKey(), "내부 시스템 오류로 인한 자동 취소", totalAmount);
+            // 취소 키는 PG마다 달라서(카카오는 tid, 네이버는 paymentId) 클라이언트가 보낸 paymentKey가 아니라
+            // 승인 응답이 돌려준 값을 쓴다. 취소마저 실패하면 정합성 배치가 PG 상태를 보고 결제완료로 복구한다.
+            paymentService.cancel(approveResponse.getCancelKey(), "내부 시스템 오류로 인한 자동 취소", totalAmount);
             throw new IllegalStateException("결제 처리 중 내부 오류가 발생하여 결제가 자동 취소되었습니다.");
         }
 

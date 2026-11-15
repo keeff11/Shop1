@@ -4,6 +4,7 @@ import com.kkh.shop_1.common.util.ChosungUtils;
 import com.kkh.shop_1.domain.item.document.ItemDocument;
 import com.kkh.shop_1.domain.item.dto.ItemSummaryDTO;
 import com.kkh.shop_1.domain.item.entity.Item;
+import com.kkh.shop_1.domain.item.entity.ItemStatus;
 import com.kkh.shop_1.domain.item.repository.ItemRepository;
 import com.kkh.shop_1.domain.item.repository.ItemSearchRepository;
 import com.kkh.shop_1.domain.user.entity.User;
@@ -50,7 +51,9 @@ public class ItemSearchService {
         itemSearchRepository.deleteAll(); // 기존 인덱스 초기화
         List<Item> items = itemRepository.findAll();
 
+        // 삭제(soft delete)된 상품은 자동완성에 노출되지 않도록 색인에서 제외한다.
         List<ItemDocument> documents = items.stream()
+                .filter(item -> item.getStatus() != ItemStatus.DELETED)
                 .map(item -> ItemDocument.from(item, ChosungUtils.extract(item.getName())))
                 .toList();
 

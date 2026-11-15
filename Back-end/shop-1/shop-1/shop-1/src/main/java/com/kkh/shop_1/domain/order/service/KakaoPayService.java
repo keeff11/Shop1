@@ -77,7 +77,7 @@ public class KakaoPayService implements PaymentService {
             if (body == null) throw new RuntimeException("승인 응답이 비어있습니다.");
 
             log.info("KakaoPay Approve Success: TID={}", body.get("tid"));
-            return PaymentApproveResponseDTO.builder().success(true).build();
+            return PaymentApproveResponseDTO.builder().success(true).cancelKey(req.getTid()).build();
         } catch (Exception e) {
             log.error("KakaoPay Approve Failed: {}", e.getMessage());
             throw new RuntimeException("결제 승인 과정에서 오류가 발생했습니다.", e);

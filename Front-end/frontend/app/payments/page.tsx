@@ -43,8 +43,9 @@ interface ApiResponse<T> {
 interface OrderResponse {
   orderId: number;
   tid: string;          
-  redirectUrl?: string; 
+  redirectUrl?: string;
   orderDate: string;
+  totalAmount: number;  // 서버가 계산한 실제 결제 금액
 }
 
 export default function PaymentPage() {
@@ -97,7 +98,8 @@ export default function PaymentPage() {
   }, [router]);
 
   const totalPrice = orderItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
-  const finalPrice = totalPrice + 3000; 
+  // 배송비는 서버 주문 금액에 포함되지 않으므로 화면에서도 따로 더하지 않는다.
+  const finalPrice = totalPrice;
 
   const handlePayment = async () => {
     // 유효성 검사
@@ -125,7 +127,9 @@ export default function PaymentPage() {
         recipientName: useNewAddress ? newAddress.recipientName : null,
         recipientPhone: useNewAddress ? newAddress.recipientPhone : null,
         
-        approvalUrl: `${window.location.origin}/orders/success`,
+        // {orderId}는 백엔드가 실제 주문 ID로 치환한다. 카카오(pg_token)·네이버(paymentId, resultCode)는
+        // 이 URL 뒤에 자기 파라미터를 덧붙여 돌려보내므로, 성공 페이지가 어떤 주문인지 알 수 있게 된다.
+        approvalUrl: `${window.location.origin}/orders/success?orderId={orderId}`,
         cancelUrl: `${window.location.origin}/cart`,
         failUrl: `${window.location.origin}/cart`,
       };
@@ -141,7 +145,7 @@ export default function PaymentPage() {
         throw new Error(res.message || "주문 생성 실패");
       }
 
-      const { tid, redirectUrl } = res.data;
+      const { tid, redirectUrl, totalAmount } = res.data;
 
       // 2. 결제 수단별 처리
       if (paymentType === "KAKAO_PAY" || paymentType === "NAVER_PAY") {
@@ -155,7 +159,8 @@ export default function PaymentPage() {
         const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
         
         await tossPayments.requestPayment("카드", {
-          amount: finalPrice,
+          // 승인 단계에서 서버 주문 금액과 비교하므로, 화면 계산값이 아니라 서버가 내려준 금액으로 결제창을 연다.
+          amount: totalAmount,
           orderId: tid, // 백엔드에서 생성한 TID 사용
           orderName: orderItems[0].itemName + (orderItems.length > 1 ? ` 외 ${orderItems.length - 1}건` : ""),
           customerName: "구매자", 
@@ -282,10 +287,6 @@ export default function PaymentPage() {
               <div className="flex justify-between text-gray-500">
                 <span>총 상품금액</span>
                 <span>{totalPrice.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between text-gray-500">
-                <span>배송비</span>
-                <span>3,000원</span>
               </div>
               <div className="h-px bg-gray-100 my-4"></div>
               <div className="flex justify-between items-center">
