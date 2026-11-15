@@ -84,9 +84,15 @@ public class NaverPayService implements PaymentService {
     public PaymentApproveResponseDTO approve(PaymentApproveRequestDTO req) {
         String url = String.format("%s/%s/naverpay/payments/v2/apply/payment", API_URL, partnerId);
 
+        // 승인 API는 ready 단계의 reserveId(tid)가 아니라, 사용자 결제 후 returnUrl로 넘어온 paymentId를 받는다.
+        String paymentId = req.getPaymentId();
+        if (paymentId == null || paymentId.isBlank()) {
+            throw new IllegalArgumentException("네이버페이 승인에 필요한 paymentId가 없습니다.");
+        }
+
         HttpHeaders headers = createHeaders();
         Map<String, String> params = new HashMap<>();
-        params.put("paymentId", req.getTid());
+        params.put("paymentId", paymentId);
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
 
         try {
@@ -99,12 +105,23 @@ public class NaverPayService implements PaymentService {
                 String admissionState = detail != null ? (String) detail.get("admissionState") : null;
 
                 if (!"SUCCESS".equals(admissionState)) {
-                    log.error("NaverPay Approve Not Admitted: ReserveID={}, admissionState={}", req.getTid(), admissionState);
+                    log.error("NaverPay Approve Not Admitted: ReserveID={}, PaymentId={}, admissionState={}", req.getTid(), paymentId, admissionState);
                     throw new RuntimeException("네이버페이 결제 승인이 완료되지 않았습니다.");
                 }
 
-                log.info("NaverPay Approve Success: ReserveID={}, PaymentId={}", req.getTid(), data.get("paymentId"));
-                return PaymentApproveResponseDTO.builder().success(true).build();
+                // paymentId는 클라이언트가 보낸 값이므로, 승인된 결제가 정말 이 주문(merchantPayKey)의 것인지 확인한다.
+                // 다른(더 싼) 주문의 paymentId로 이 주문을 결제완료 처리하는 것을 막고, 잘못 승인된 결제는 즉시 취소한다.
+                Object merchantPayKey = detail.get("merchantPayKey");
+                if (merchantPayKey != null && !merchantPayKey.toString().equals(req.getPartnerOrderId())) {
+                    log.error("NaverPay 주문 불일치: 요청 orderId={}, 결제 merchantPayKey={}, paymentId={}", req.getPartnerOrderId(), merchantPayKey, paymentId);
+                    Object paidAmount = detail.get("totalPayAmount");
+                    cancel(paymentId, "주문 정보 불일치로 인한 자동 취소",
+                            paidAmount instanceof Number n ? n.intValue() : req.getAmount());
+                    throw new IllegalStateException("결제 정보가 주문과 일치하지 않아 결제가 취소되었습니다.");
+                }
+
+                log.info("NaverPay Approve Success: ReserveID={}, PaymentId={}", req.getTid(), paymentId);
+                return PaymentApproveResponseDTO.builder().success(true).cancelKey(paymentId).build();
             }
 
             log.error("NaverPay Approve Failed: code={}, message={}",

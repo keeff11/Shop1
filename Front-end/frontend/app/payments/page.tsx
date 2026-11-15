@@ -125,7 +125,9 @@ export default function PaymentPage() {
         recipientName: useNewAddress ? newAddress.recipientName : null,
         recipientPhone: useNewAddress ? newAddress.recipientPhone : null,
         
-        approvalUrl: `${window.location.origin}/orders/success`,
+        // {orderId}는 백엔드가 실제 주문 ID로 치환한다. 카카오(pg_token)·네이버(paymentId, resultCode)는
+        // 이 URL 뒤에 자기 파라미터를 덧붙여 돌려보내므로, 성공 페이지가 어떤 주문인지 알 수 있게 된다.
+        approvalUrl: `${window.location.origin}/orders/success?orderId={orderId}`,
         cancelUrl: `${window.location.origin}/cart`,
         failUrl: `${window.location.origin}/cart`,
       };

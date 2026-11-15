@@ -58,7 +58,7 @@ public class TossPayService implements PaymentService {
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(CONFIRM_URL, new HttpEntity<>(params, headers), Map.class);
-            return PaymentApproveResponseDTO.builder().success(true).build();
+            return PaymentApproveResponseDTO.builder().success(true).cancelKey(req.getPaymentKey()).build();
 
         } catch (HttpClientErrorException e) {
             String errorBody = e.getResponseBodyAsString();
@@ -66,7 +66,7 @@ public class TossPayService implements PaymentService {
             // 🌟 복구됨: 중복 승인 요청 시 에러 뱉지 않고 조용히 성공 처리
             if (errorBody.contains("DUPLICATED_ORDER_ID")) {
                 log.warn("▶ [토스 승인 무시] 이미 승인된 중복 요청입니다. (orderId={})", req.getTid());
-                return PaymentApproveResponseDTO.builder().success(true).build();
+                return PaymentApproveResponseDTO.builder().success(true).cancelKey(req.getPaymentKey()).build();
             }
 
             log.error("토스 결제 승인 실패 (HTTP {}): {}", e.getStatusCode(), errorBody);

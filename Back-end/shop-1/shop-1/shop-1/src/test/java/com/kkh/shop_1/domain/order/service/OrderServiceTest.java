@@ -7,6 +7,7 @@ import com.kkh.shop_1.domain.order.dto.OrderApproveDTO;
 import com.kkh.shop_1.domain.order.dto.OrderRequestDTO;
 import com.kkh.shop_1.domain.order.dto.OrderResponseDTO;
 import com.kkh.shop_1.domain.order.dto.PaymentApproveRequestDTO;
+import com.kkh.shop_1.domain.order.dto.PaymentApproveResponseDTO;
 import com.kkh.shop_1.domain.order.dto.PaymentReadyResponseDTO;
 import com.kkh.shop_1.domain.order.entity.Order;
 import com.kkh.shop_1.domain.order.entity.OrderItem;
@@ -425,14 +426,14 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("DB 결제 상태 업데이트 실패 시 서버 계산 금액으로 PG 취소를 호출하고 IllegalStateException을 던진다")
+        @DisplayName("DB 결제 상태 업데이트 실패 시 승인 응답의 취소 키와 서버 계산 금액으로 PG 취소를 호출하고 IllegalStateException을 던진다")
         void doApprove_CompletePaymentFails_CancelsWithTotalAmountAndThrows() throws InterruptedException {
             // given
             Long userId = 1L;
             Long orderId = 1L;
             OrderApproveDTO dto = new OrderApproveDTO();
             dto.setOrderId(orderId.toString());
-            dto.setPaymentKey("payment-key-1");
+            dto.setPg_token("pg-token-1"); // 카카오페이는 paymentKey를 보내지 않는다
 
             Order order = buildOrder(orderId, 2); // totalAmount = 20000
             ReflectionTestUtils.setField(order, "paymentType", PaymentType.KAKAO_PAY);
@@ -440,6 +441,8 @@ class OrderServiceTest {
             stubApproveLock(orderId);
             given(orderRepository.findByIdWithFetch(orderId)).willReturn(Optional.of(order));
             given(paymentServiceFactory.getService(PaymentType.KAKAO_PAY)).willReturn(paymentService);
+            given(paymentService.approve(any(PaymentApproveRequestDTO.class)))
+                    .willReturn(PaymentApproveResponseDTO.builder().success(true).cancelKey("kakao-tid-1").build());
             willThrow(new RuntimeException("DB 업데이트 실패"))
                     .given(orderTxHandler).completeOrderPayment(orderId, userId);
 
@@ -447,7 +450,7 @@ class OrderServiceTest {
             assertThatThrownBy(() -> orderService.approveOrder(dto, userId))
                     .isInstanceOf(IllegalStateException.class);
 
-            verify(paymentService).cancel(eq("payment-key-1"), anyString(), eq(order.getTotalAmount()));
+            verify(paymentService).cancel(eq("kakao-tid-1"), anyString(), eq(order.getTotalAmount()));
         }
     }
 }
