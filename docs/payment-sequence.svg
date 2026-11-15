@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1878" height="3608" viewBox="0 0 1878 3608" font-family="'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1878" height="3682" viewBox="0 0 1878 3682" font-family="'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif">
 <style>.halo{paint-order:stroke;stroke:#ffffff;stroke-width:4px;stroke-linejoin:round}</style>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <rect x="20" y="168" width="1838" height="30" rx="6" fill="#e8f1fb"/>
 <rect x="30" y="412" width="1000" height="66" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
 <rect x="30" y="850" width="1344" height="138" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<rect x="20" y="1118" width="1838" height="30" rx="6" fill="#eaf7ee"/>
-<rect x="30" y="1164" width="1344" height="128" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<line x1="30" y1="1230" x2="1374" y2="1230" stroke="#c05621" stroke-dasharray="6 4"/>
-<rect x="30" y="1398" width="656" height="86" rx="4" fill="#e6f6ea" fill-opacity="0.55" stroke="#1a7f37" stroke-width="1.3"/>
-<rect x="20" y="1506" width="1838" height="30" rx="6" fill="#fdf0e6"/>
-<rect x="30" y="1822" width="1000" height="66" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<rect x="374" y="2078" width="828" height="66" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<rect x="374" y="2302" width="1000" height="102" rx="4" fill="#e6f6ea" fill-opacity="0.55" stroke="#1a7f37" stroke-width="1.3"/>
-<rect x="374" y="2598" width="1000" height="102" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<rect x="20" y="3032" width="1838" height="30" rx="6" fill="#f1ecfb"/>
-<rect x="1406" y="3078" width="432" height="82" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<rect x="730" y="3280" width="1096" height="194" rx="4" fill="#fffaf0" fill-opacity="0.4" stroke="#c05621" stroke-width="1.3"/>
-<line x1="730" y1="3346" x2="1826" y2="3346" stroke="#c05621" stroke-dasharray="6 4"/>
-<line x1="730" y1="3408" x2="1826" y2="3408" stroke="#c05621" stroke-dasharray="6 4"/>
-<rect x="718" y="3174" width="1120" height="310" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
-<line x1="100" y1="140" x2="100" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="272" y1="140" x2="272" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="444" y1="140" x2="444" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="616" y1="140" x2="616" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="788" y1="140" x2="788" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="960" y1="140" x2="960" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1132" y1="140" x2="1132" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1304" y1="140" x2="1304" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1476" y1="140" x2="1476" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1648" y1="140" x2="1648" y2="3508" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="20" y="1192" width="1838" height="30" rx="6" fill="#eaf7ee"/>
+<rect x="30" y="1238" width="1344" height="128" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<line x1="30" y1="1304" x2="1374" y2="1304" stroke="#c05621" stroke-dasharray="6 4"/>
+<rect x="30" y="1472" width="656" height="86" rx="4" fill="#e6f6ea" fill-opacity="0.55" stroke="#1a7f37" stroke-width="1.3"/>
+<rect x="20" y="1580" width="1838" height="30" rx="6" fill="#fdf0e6"/>
+<rect x="30" y="1896" width="1000" height="66" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<rect x="374" y="2152" width="828" height="66" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<rect x="374" y="2376" width="1000" height="102" rx="4" fill="#e6f6ea" fill-opacity="0.55" stroke="#1a7f37" stroke-width="1.3"/>
+<rect x="374" y="2672" width="1000" height="102" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<rect x="20" y="3106" width="1838" height="30" rx="6" fill="#f1ecfb"/>
+<rect x="1406" y="3152" width="432" height="82" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<rect x="730" y="3354" width="1096" height="194" rx="4" fill="#fffaf0" fill-opacity="0.4" stroke="#c05621" stroke-width="1.3"/>
+<line x1="730" y1="3420" x2="1826" y2="3420" stroke="#c05621" stroke-dasharray="6 4"/>
+<line x1="730" y1="3482" x2="1826" y2="3482" stroke="#c05621" stroke-dasharray="6 4"/>
+<rect x="718" y="3248" width="1120" height="310" rx="4" fill="#fffaf0" fill-opacity="0.55" stroke="#c05621" stroke-width="1.3"/>
+<line x1="100" y1="140" x2="100" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="272" y1="140" x2="272" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="444" y1="140" x2="444" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="616" y1="140" x2="616" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="788" y1="140" x2="788" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="960" y1="140" x2="960" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1132" y1="140" x2="1132" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1304" y1="140" x2="1304" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1476" y1="140" x2="1476" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/><line x1="1648" y1="140" x2="1648" y2="3582" stroke="#9aa5b1" stroke-width="1.2" stroke-dasharray="4 4"/>
 <text x="40" y="42" font-size="24" font-weight="700" fill="#1f2933">결제 흐름 시퀀스 다이어그램</text>
 <text x="40" y="66" font-size="13" fill="#52606d">Shop1 · 주문 생성 → PG 결제 → 승인 → Outbox 알림 → 정합성 배치   </text>
 <text x="560" y="66" font-size="13" font-weight="700" fill="#1a7f37">초록색 = 결제 승인 흐름 수정으로 추가·변경된 부분</text>
@@ -109,195 +109,197 @@
 <text x="960" y="1048" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">Order.tid 저장</text>
 <line x1="788" y1="1058" x2="1130" y2="1058" stroke="#1f4e79" stroke-width="1.6" />
 <path d="M1132 1058 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="186" y="1084" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">OrderResponseDTO (tid, redirectUrl)</text>
-<line x1="272" y1="1094" x2="102" y2="1094" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M100 1094 l10 -5 l0 10 z" fill="#7b8794"/>
-<text x="36" y="1138" font-size="15" font-weight="700" fill="#22663a">② 사용자 결제   —   PG 결제창</text>
-<text x="702" y="1208" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">window.location.href = redirectUrl</text>
-<line x1="100" y1="1218" x2="1302" y2="1218" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1304 1218 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="702" y="1270" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">Toss SDK requestPayment(orderId = tid, amount)</text>
-<line x1="100" y1="1280" x2="1302" y2="1280" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1304 1280 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<path d="M30 1164 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
-<text x="37" y="1179" font-size="12" font-weight="700" fill="#fff">alt</text>
-<text x="74.88" y="1180" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[카카오페이 / 네이버페이]</text>
-<text x="38" y="1247" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[토스페이]</text>
-<path d="M1304 1306 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
-<path d="M1304 1328 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1346" y="1318" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">사용자 인증 · 결제 진행</text>
-<text x="702" y="1356" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">redirect → /orders/success?orderId={id}</text><text x="702" y="1372" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">카카오 &amp;pg_token  ·  네이버 &amp;paymentId&amp;resultCode  ·  토스 ?paymentKey&amp;orderId&amp;amount</text>
-<line x1="1304" y1="1382" x2="102" y2="1382" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
-<path d="M100 1382 l10 -5 l0 10 z" fill="#1a7f37"/>
-<path d="M100 1432 h34 v38 h-32" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
-<path d="M100 1470 l10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="142" y="1444" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">승인 요청 없이 장바구니로 이동</text><text x="142" y="1460" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">(주문은 정합성 배치가 PG 조회 후 취소·재고 복구)</text>
-<path d="M30 1398 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#1a7f37"/>
-<text x="37" y="1413" font-size="12" font-weight="700" fill="#fff">opt</text>
-<text x="74.88" y="1414" font-size="12.5" font-weight="700" fill="#1a7f37" class="halo">[네이버 resultCode ≠ Success (결제 실패 · 사용자 취소)]</text>
-<text x="36" y="1526" font-size="15" font-weight="700" fill="#9c4221">③ 결제 승인   —   GET /orders/payment/approve</text>
-<path d="M100 1552 h34 v38 h-32" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
-<path d="M100 1590 l10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="142" y="1564" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">Idempotency-Key = approve:{orderId}:{pg_token | paymentKey | paymentId}</text><text x="142" y="1580" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">(같은 콜백이면 항상 같은 키 → 새로고침·재시도도 안전)</text>
-<text x="186" y="1618" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">GET /orders/payment/approve</text><text x="186" y="1634" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">+ 헤더 Idempotency-Key</text><text x="186" y="1650" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">?orderId &amp; pg_token</text><text x="186" y="1666" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">| paymentKey&amp;amount | paymentId</text>
-<line x1="100" y1="1676" x2="270" y2="1676" stroke="#1a7f37" stroke-width="2" />
-<path d="M272 1676 l-10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="358" y="1702" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">approveOrder() 호출 → AOP 가로챔</text>
-<line x1="272" y1="1712" x2="442" y2="1712" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M444 1712 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<path d="M458 1728 h236.64000000000004 l10 10 v34 h-246.64000000000004 z" fill="#fff8c5" stroke="#d4b106"/>
-<text x="468" y="1746" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">Idempotency-Key 헤더 검증</text><text x="468" y="1762" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">(없으면 IllegalArgumentException)</text>
-<text x="702" y="1796" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">GET idempotency:result:{key}</text>
-<line x1="444" y1="1806" x2="958" y2="1806" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M960 1806 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="272" y="1866" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">캐시된 응답 그대로 반환 (로직 미실행)</text>
-<line x1="444" y1="1876" x2="102" y2="1876" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M100 1876 l10 -5 l0 10 z" fill="#7b8794"/>
-<path d="M30 1822 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
-<text x="37" y="1837" font-size="12" font-weight="700" fill="#fff">opt</text>
-<text x="74.88" y="1838" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[캐시 hit (이미 처리된 요청)]</text>
-<text x="702" y="1912" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">tryLock idempotency:lock:{key}</text><text x="702" y="1928" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(wait 0 = fail-fast, lease 60s)</text>
-<line x1="444" y1="1938" x2="958" y2="1938" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M960 1938 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="530" y="1964" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">proceed() → approveOrder(dto, userId)</text>
-<line x1="444" y1="1974" x2="614" y2="1974" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M616 1974 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="788" y="2000" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">lock ORDER_APPROVE:{orderId}</text><text x="788" y="2016" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(wait 10s, watchdog 자동 연장)</text>
-<line x1="616" y1="2026" x2="958" y2="2026" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M960 2026 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="874" y="2052" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">fetchOrder() · 주문 소유자 검증</text>
-<line x1="616" y1="2062" x2="1130" y2="2062" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 2062 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="530" y="2122" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">기존 주문 정보 반환 (중복 승인 방지)</text>
-<line x1="616" y1="2132" x2="446" y2="2132" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M444 2132 l10 -5 l0 10 z" fill="#7b8794"/>
-<path d="M374 2078 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
-<text x="381" y="2093" font-size="12" font-weight="700" fill="#fff">opt</text>
-<text x="418.88" y="2094" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[이미 PAID]</text>
-<path d="M616 2158 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
-<path d="M616 2180 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="658" y="2170" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">금액 검증: 요청 amount == 서버 계산 totalAmount</text>
-<text x="960" y="2208" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">PaymentService.approve()</text><text x="960" y="2224" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">카카오 /approve(tid, pg_token) · 토스 /confirm(paymentKey, amount)</text><text x="960" y="2240" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">네이버 /v2/apply/payment(콜백으로 받은 paymentId)</text>
-<line x1="616" y1="2250" x2="1302" y2="2250" stroke="#1a7f37" stroke-width="2" />
-<path d="M1304 2250 l-10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="960" y="2276" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">승인 결과 (cancelKey 포함)</text>
-<line x1="1304" y1="2286" x2="618" y2="2286" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M616 2286 l10 -5 l0 10 z" fill="#7b8794"/>
-<text x="960" y="2346" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">cancel(paymentId) — 다른 주문의 결제 재사용 차단</text>
-<line x1="616" y1="2356" x2="1302" y2="2356" stroke="#1a7f37" stroke-width="2" />
-<path d="M1304 2356 l-10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="530" y="2382" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">예외: "결제 정보 불일치, 결제 취소됨"</text>
-<line x1="616" y1="2392" x2="446" y2="2392" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
-<path d="M444 2392 l10 -5 l0 10 z" fill="#1a7f37"/>
-<path d="M374 2302 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#1a7f37"/>
-<text x="381" y="2317" font-size="12" font-weight="700" fill="#fff">opt</text>
-<text x="418.88" y="2318" font-size="12.5" font-weight="700" fill="#1a7f37" class="halo">[네이버: 승인된 결제의 merchantPayKey ≠ 주문 ID]</text>
-<text x="702" y="2428" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">completeOrderPayment()  [TX]</text>
-<line x1="616" y1="2438" x2="786" y2="2438" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M788 2438 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="960" y="2464" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">Order → PAID</text>
-<line x1="788" y1="2474" x2="1130" y2="2474" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 2474 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1132" y="2500" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">outboxEventService.record("ORDER_PAID")</text>
-<line x1="788" y1="2510" x2="1474" y2="2510" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1476 2510 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1304" y="2536" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">outbox_event INSERT (같은 TX)</text>
-<line x1="1476" y1="2546" x2="1134" y2="2546" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 2546 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="960" y="2572" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">쿠폰 사용 처리 · 장바구니 삭제</text>
-<line x1="788" y1="2582" x2="1130" y2="2582" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 2582 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="960" y="2642" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">cancel(cancelKey, "내부 시스템 오류로 인한 자동 취소")</text>
-<line x1="616" y1="2652" x2="1302" y2="2652" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1304 2652 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="530" y="2678" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">예외: "결제가 자동 취소되었습니다"</text>
-<line x1="616" y1="2688" x2="446" y2="2688" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M444 2688 l10 -5 l0 10 z" fill="#7b8794"/>
-<path d="M374 2598 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
-<text x="381" y="2613" font-size="12" font-weight="700" fill="#fff">alt</text>
-<text x="418.88" y="2614" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[DB 반영 실패 (보상 처리)]</text>
-<path d="M1490 2714 h297.36 l10 10 v34 h-307.36 z" fill="#fff8c5" stroke="#d4b106"/>
-<text x="1500" y="2732" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">TX 커밋 직후</text><text x="1500" y="2748" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">@TransactionalEventListener(AFTER_COMMIT)</text>
-<path d="M1476 2772 h34 v38 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
-<path d="M1476 2810 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1518" y="2784" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">tryPublish(): 트랜잭션 밖에서</text><text x="1518" y="2800" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">결제 완료 이메일 발송</text>
-<text x="1304" y="2838" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">markPublished / markPublishFailed</text><text x="1304" y="2854" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(REQUIRES_NEW)</text>
-<line x1="1476" y1="2864" x2="1134" y2="2864" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 2864 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="788" y="2890" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">unlock ORDER_APPROVE</text>
-<line x1="616" y1="2900" x2="958" y2="2900" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M960 2900 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="530" y="2926" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">OrderDetailDTO</text>
-<line x1="616" y1="2936" x2="446" y2="2936" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
-<path d="M444 2936 l10 -5 l0 10 z" fill="#7b8794"/>
-<text x="702" y="2962" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">SET idempotency:result:{key} (TTL 24h) · unlock</text>
-<line x1="444" y1="2972" x2="958" y2="2972" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M960 2972 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="272" y="2998" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">OrderDetailDTO → /orders/detail/{응답 data.orderId} 로 이동</text>
-<line x1="444" y1="3008" x2="102" y2="3008" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
-<path d="M100 3008 l10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="36" y="3052" font-size="15" font-weight="700" fill="#553c9a">④ 백그라운드 안전망   —   스케줄러</text>
-<text x="1562" y="3122" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">PENDING 3분 경과 이벤트</text><text x="1562" y="3138" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">→ tryPublish() 재시도</text>
-<line x1="1648" y1="3148" x2="1478" y2="3148" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1476 3148 l10 -5 l0 10 z" fill="#1f4e79"/>
-<path d="M1406 3078 h43.839999999999996 v14 l-8 8 h-35.839999999999996 z" fill="#c05621"/>
-<text x="1413" y="3093" font-size="12" font-weight="700" fill="#fff">loop</text>
-<text x="1457.84" y="3094" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[1분마다 · OutboxPollingScheduler]</text>
-<text x="1390" y="3218" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">PAYMENT_PENDING 10분 경과 주문 조회</text>
-<line x1="1648" y1="3228" x2="1134" y2="3228" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1132 3228 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1476" y="3254" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">inquire(order): PG 기준 실제 결제 상태</text>
-<line x1="1648" y1="3264" x2="1306" y2="3264" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M1304 3264 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1218" y="3324" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">completeOrderPayment() → 결제 완료로 복구</text>
-<line x1="1648" y1="3334" x2="790" y2="3334" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M788 3334 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1218" y="3386" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">cancelOrderPayment() → 취소 + 재고 복구</text>
-<line x1="1648" y1="3396" x2="790" y2="3396" stroke="#1f4e79" stroke-width="1.6" />
-<path d="M788 3396 l10 -5 l0 10 z" fill="#1f4e79"/>
-<path d="M1648 3438 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
-<path d="M1648 3460 l10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="1690" y="3450" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">다음 주기에 재시도</text>
-<path d="M730 3280 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
-<text x="737" y="3295" font-size="12" font-weight="700" fill="#fff">alt</text>
-<text x="774.88" y="3296" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[PAID]</text>
-<text x="738" y="3363" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[NOT_PAID]</text>
-<text x="738" y="3425" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[UNKNOWN]</text>
-<path d="M718 3174 h43.839999999999996 v14 l-8 8 h-35.839999999999996 z" fill="#c05621"/>
-<text x="725" y="3189" font-size="12" font-weight="700" fill="#fff">loop</text>
-<text x="769.84" y="3190" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[5분마다 · OrderReconciliationScheduler]</text>
-<rect x="25" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="100" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">사용자 브라우저</text>
-<text x="100" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(Next.js)</text>
-<rect x="197" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="272" y="3538" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderController</text>
-<rect x="369" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="444" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">IdempotencyAop</text>
-<text x="444" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(@Idempotent)</text>
-<rect x="541" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="616" y="3538" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderService</text>
-<rect x="713" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="788" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderTxHandler</text>
-<text x="788" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(@Transactional)</text>
-<rect x="885" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="960" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Redis</text>
-<text x="960" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(Redisson 락·캐시)</text>
-<rect x="1057" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="1132" y="3538" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">MySQL</text>
-<rect x="1229" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="1304" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">PG사</text>
-<text x="1304" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(카카오·네이버·토스)</text>
-<rect x="1401" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="1476" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Outbox → Email</text>
-<text x="1476" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(Listener·Service)</text>
-<rect x="1573" y="3508" width="150" height="50" rx="8" fill="#1f4e79"/>
-<text x="1648" y="3529" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">스케줄러</text>
-<text x="1648" y="3546" text-anchor="middle" font-size="11" fill="#cfe0f1">(배치)</text>
-<line x1="40" y1="3578" x2="80" y2="3578" stroke="#1f4e79" stroke-width="1.6" /><path d="M80 3578 l-10 -5 l0 10 z" fill="#1f4e79"/>
-<text x="88" y="3582" font-size="12"  fill="#52606d">호출</text>
-<line x1="120" y1="3578" x2="160" y2="3578" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/><path d="M160 3578 l-10 -5 l0 10 z" fill="#7b8794"/>
-<text x="168" y="3582" font-size="12"  fill="#52606d">응답 / 예외</text>
-<line x1="250" y1="3578" x2="290" y2="3578" stroke="#1a7f37" stroke-width="1.6" /><path d="M290 3578 l-10 -5 l0 10 z" fill="#1a7f37"/>
-<text x="298" y="3582" font-size="12" font-weight="700" fill="#1a7f37">이번 수정으로 추가·변경</text>
-<text x="460" y="3582" font-size="12" fill="#52606d">[TX] = OrderTxHandler의 @Transactional 메서드 (짧은 트랜잭션 단위)</text>
+<text x="186" y="1084" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">OrderResponseDTO (tid, redirectUrl,</text><text x="186" y="1100" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">totalAmount = 서버 계산 결제 금액)</text>
+<line x1="272" y1="1110" x2="102" y2="1110" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M100 1110 l10 -5 l0 10 z" fill="#1a7f37"/>
+<path d="M114 1126 h277.44000000000005 l10 10 v34 h-287.44000000000005 z" fill="#e6f6ea" stroke="#1a7f37"/>
+<text x="124" y="1144" text-anchor="start" font-size="12" fill="#1a7f37"  class="halo">화면 최종 금액 = 상품 합계 (배송비 미포함)</text><text x="124" y="1160" text-anchor="start" font-size="12" fill="#1a7f37"  class="halo">→ 서버 주문 금액과 동일</text>
+<text x="36" y="1212" font-size="15" font-weight="700" fill="#22663a">② 사용자 결제   —   PG 결제창</text>
+<text x="702" y="1282" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">window.location.href = redirectUrl</text>
+<line x1="100" y1="1292" x2="1302" y2="1292" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1304 1292 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="702" y="1344" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">Toss SDK requestPayment(orderId = tid, amount = 응답 totalAmount)</text>
+<line x1="100" y1="1354" x2="1302" y2="1354" stroke="#1a7f37" stroke-width="2" />
+<path d="M1304 1354 l-10 -5 l0 10 z" fill="#1a7f37"/>
+<path d="M30 1238 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
+<text x="37" y="1253" font-size="12" font-weight="700" fill="#fff">alt</text>
+<text x="74.88" y="1254" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[카카오페이 / 네이버페이]</text>
+<text x="38" y="1321" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[토스페이]</text>
+<path d="M1304 1380 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
+<path d="M1304 1402 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1346" y="1392" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">사용자 인증 · 결제 진행</text>
+<text x="702" y="1430" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">redirect → /orders/success?orderId={id}</text><text x="702" y="1446" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">카카오 &amp;pg_token  ·  네이버 &amp;paymentId&amp;resultCode  ·  토스 ?paymentKey&amp;orderId&amp;amount</text>
+<line x1="1304" y1="1456" x2="102" y2="1456" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M100 1456 l10 -5 l0 10 z" fill="#1a7f37"/>
+<path d="M100 1506 h34 v38 h-32" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
+<path d="M100 1544 l10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="142" y="1518" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">승인 요청 없이 장바구니로 이동</text><text x="142" y="1534" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">(주문은 정합성 배치가 PG 조회 후 취소·재고 복구)</text>
+<path d="M30 1472 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#1a7f37"/>
+<text x="37" y="1487" font-size="12" font-weight="700" fill="#fff">opt</text>
+<text x="74.88" y="1488" font-size="12.5" font-weight="700" fill="#1a7f37" class="halo">[네이버 resultCode ≠ Success (결제 실패 · 사용자 취소)]</text>
+<text x="36" y="1600" font-size="15" font-weight="700" fill="#9c4221">③ 결제 승인   —   GET /orders/payment/approve</text>
+<path d="M100 1626 h34 v38 h-32" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
+<path d="M100 1664 l10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="142" y="1638" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">Idempotency-Key = approve:{orderId}:{pg_token | paymentKey | paymentId}</text><text x="142" y="1654" text-anchor="start" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">(같은 콜백이면 항상 같은 키 → 새로고침·재시도도 안전)</text>
+<text x="186" y="1692" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">GET /orders/payment/approve</text><text x="186" y="1708" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">+ 헤더 Idempotency-Key</text><text x="186" y="1724" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">?orderId &amp; pg_token</text><text x="186" y="1740" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">| paymentKey&amp;amount | paymentId</text>
+<line x1="100" y1="1750" x2="270" y2="1750" stroke="#1a7f37" stroke-width="2" />
+<path d="M272 1750 l-10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="358" y="1776" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">approveOrder() 호출 → AOP 가로챔</text>
+<line x1="272" y1="1786" x2="442" y2="1786" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M444 1786 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<path d="M458 1802 h236.64000000000004 l10 10 v34 h-246.64000000000004 z" fill="#fff8c5" stroke="#d4b106"/>
+<text x="468" y="1820" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">Idempotency-Key 헤더 검증</text><text x="468" y="1836" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">(없으면 IllegalArgumentException)</text>
+<text x="702" y="1870" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">GET idempotency:result:{key}</text>
+<line x1="444" y1="1880" x2="958" y2="1880" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M960 1880 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="272" y="1940" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">캐시된 응답 그대로 반환 (로직 미실행)</text>
+<line x1="444" y1="1950" x2="102" y2="1950" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
+<path d="M100 1950 l10 -5 l0 10 z" fill="#7b8794"/>
+<path d="M30 1896 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
+<text x="37" y="1911" font-size="12" font-weight="700" fill="#fff">opt</text>
+<text x="74.88" y="1912" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[캐시 hit (이미 처리된 요청)]</text>
+<text x="702" y="1986" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">tryLock idempotency:lock:{key}</text><text x="702" y="2002" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(wait 0 = fail-fast, lease 60s)</text>
+<line x1="444" y1="2012" x2="958" y2="2012" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M960 2012 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="530" y="2038" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">proceed() → approveOrder(dto, userId)</text>
+<line x1="444" y1="2048" x2="614" y2="2048" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M616 2048 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="788" y="2074" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">lock ORDER_APPROVE:{orderId}</text><text x="788" y="2090" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(wait 10s, watchdog 자동 연장)</text>
+<line x1="616" y1="2100" x2="958" y2="2100" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M960 2100 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="874" y="2126" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">fetchOrder() · 주문 소유자 검증</text>
+<line x1="616" y1="2136" x2="1130" y2="2136" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 2136 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="530" y="2196" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">기존 주문 정보 반환 (중복 승인 방지)</text>
+<line x1="616" y1="2206" x2="446" y2="2206" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
+<path d="M444 2206 l10 -5 l0 10 z" fill="#7b8794"/>
+<path d="M374 2152 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
+<text x="381" y="2167" font-size="12" font-weight="700" fill="#fff">opt</text>
+<text x="418.88" y="2168" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[이미 PAID]</text>
+<path d="M616 2232 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
+<path d="M616 2254 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="658" y="2244" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">금액 검증: 요청 amount == 서버 계산 totalAmount</text>
+<text x="960" y="2282" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">PaymentService.approve()</text><text x="960" y="2298" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">카카오 /approve(tid, pg_token) · 토스 /confirm(paymentKey, amount)</text><text x="960" y="2314" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">네이버 /v2/apply/payment(콜백으로 받은 paymentId)</text>
+<line x1="616" y1="2324" x2="1302" y2="2324" stroke="#1a7f37" stroke-width="2" />
+<path d="M1304 2324 l-10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="960" y="2350" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">승인 결과 (cancelKey 포함)</text>
+<line x1="1304" y1="2360" x2="618" y2="2360" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
+<path d="M616 2360 l10 -5 l0 10 z" fill="#7b8794"/>
+<text x="960" y="2420" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">cancel(paymentId) — 다른 주문의 결제 재사용 차단</text>
+<line x1="616" y1="2430" x2="1302" y2="2430" stroke="#1a7f37" stroke-width="2" />
+<path d="M1304 2430 l-10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="530" y="2456" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">예외: "결제 정보 불일치, 결제 취소됨"</text>
+<line x1="616" y1="2466" x2="446" y2="2466" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M444 2466 l10 -5 l0 10 z" fill="#1a7f37"/>
+<path d="M374 2376 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#1a7f37"/>
+<text x="381" y="2391" font-size="12" font-weight="700" fill="#fff">opt</text>
+<text x="418.88" y="2392" font-size="12.5" font-weight="700" fill="#1a7f37" class="halo">[네이버: 승인된 결제의 merchantPayKey ≠ 주문 ID]</text>
+<text x="702" y="2502" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">completeOrderPayment()  [TX]</text>
+<line x1="616" y1="2512" x2="786" y2="2512" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M788 2512 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="960" y="2538" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">Order → PAID</text>
+<line x1="788" y1="2548" x2="1130" y2="2548" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 2548 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1132" y="2574" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">outboxEventService.record("ORDER_PAID")</text>
+<line x1="788" y1="2584" x2="1474" y2="2584" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1476 2584 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1304" y="2610" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">outbox_event INSERT (같은 TX)</text>
+<line x1="1476" y1="2620" x2="1134" y2="2620" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 2620 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="960" y="2646" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">쿠폰 사용 처리 · 장바구니 삭제</text>
+<line x1="788" y1="2656" x2="1130" y2="2656" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 2656 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="960" y="2716" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">cancel(cancelKey, "내부 시스템 오류로 인한 자동 취소")</text>
+<line x1="616" y1="2726" x2="1302" y2="2726" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1304 2726 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="530" y="2752" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">예외: "결제가 자동 취소되었습니다"</text>
+<line x1="616" y1="2762" x2="446" y2="2762" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
+<path d="M444 2762 l10 -5 l0 10 z" fill="#7b8794"/>
+<path d="M374 2672 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
+<text x="381" y="2687" font-size="12" font-weight="700" fill="#fff">alt</text>
+<text x="418.88" y="2688" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[DB 반영 실패 (보상 처리)]</text>
+<path d="M1490 2788 h297.36 l10 10 v34 h-307.36 z" fill="#fff8c5" stroke="#d4b106"/>
+<text x="1500" y="2806" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">TX 커밋 직후</text><text x="1500" y="2822" text-anchor="start" font-size="12" fill="#5c4a00"  class="halo">@TransactionalEventListener(AFTER_COMMIT)</text>
+<path d="M1476 2846 h34 v38 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
+<path d="M1476 2884 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1518" y="2858" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">tryPublish(): 트랜잭션 밖에서</text><text x="1518" y="2874" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">결제 완료 이메일 발송</text>
+<text x="1304" y="2912" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">markPublished / markPublishFailed</text><text x="1304" y="2928" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">(REQUIRES_NEW)</text>
+<line x1="1476" y1="2938" x2="1134" y2="2938" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 2938 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="788" y="2964" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">unlock ORDER_APPROVE</text>
+<line x1="616" y1="2974" x2="958" y2="2974" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M960 2974 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="530" y="3000" text-anchor="middle" font-size="12.5" fill="#52606d"  class="halo">OrderDetailDTO</text>
+<line x1="616" y1="3010" x2="446" y2="3010" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/>
+<path d="M444 3010 l10 -5 l0 10 z" fill="#7b8794"/>
+<text x="702" y="3036" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">SET idempotency:result:{key} (TTL 24h) · unlock</text>
+<line x1="444" y1="3046" x2="958" y2="3046" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M960 3046 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="272" y="3072" text-anchor="middle" font-size="12.5" fill="#1a7f37" font-weight="700" class="halo">OrderDetailDTO → /orders/detail/{응답 data.orderId} 로 이동</text>
+<line x1="444" y1="3082" x2="102" y2="3082" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M100 3082 l10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="36" y="3126" font-size="15" font-weight="700" fill="#553c9a">④ 백그라운드 안전망   —   스케줄러</text>
+<text x="1562" y="3196" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">PENDING 3분 경과 이벤트</text><text x="1562" y="3212" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">→ tryPublish() 재시도</text>
+<line x1="1648" y1="3222" x2="1478" y2="3222" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1476 3222 l10 -5 l0 10 z" fill="#1f4e79"/>
+<path d="M1406 3152 h43.839999999999996 v14 l-8 8 h-35.839999999999996 z" fill="#c05621"/>
+<text x="1413" y="3167" font-size="12" font-weight="700" fill="#fff">loop</text>
+<text x="1457.84" y="3168" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[1분마다 · OutboxPollingScheduler]</text>
+<text x="1390" y="3292" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">PAYMENT_PENDING 10분 경과 주문 조회</text>
+<line x1="1648" y1="3302" x2="1134" y2="3302" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1132 3302 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1476" y="3328" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">inquire(order): PG 기준 실제 결제 상태</text>
+<line x1="1648" y1="3338" x2="1306" y2="3338" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M1304 3338 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1218" y="3398" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">completeOrderPayment() → 결제 완료로 복구</text>
+<line x1="1648" y1="3408" x2="790" y2="3408" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M788 3408 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1218" y="3460" text-anchor="middle" font-size="12.5" fill="#1f2933"  class="halo">cancelOrderPayment() → 취소 + 재고 복구</text>
+<line x1="1648" y1="3470" x2="790" y2="3470" stroke="#1f4e79" stroke-width="1.6" />
+<path d="M788 3470 l10 -5 l0 10 z" fill="#1f4e79"/>
+<path d="M1648 3512 h34 v22 h-32" fill="none" stroke="#1f4e79" stroke-width="1.6"/>
+<path d="M1648 3534 l10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="1690" y="3524" text-anchor="start" font-size="12.5" fill="#1f2933"  class="halo">다음 주기에 재시도</text>
+<path d="M730 3354 h36.879999999999995 v14 l-8 8 h-28.879999999999995 z" fill="#c05621"/>
+<text x="737" y="3369" font-size="12" font-weight="700" fill="#fff">alt</text>
+<text x="774.88" y="3370" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[PAID]</text>
+<text x="738" y="3437" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[NOT_PAID]</text>
+<text x="738" y="3499" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[UNKNOWN]</text>
+<path d="M718 3248 h43.839999999999996 v14 l-8 8 h-35.839999999999996 z" fill="#c05621"/>
+<text x="725" y="3263" font-size="12" font-weight="700" fill="#fff">loop</text>
+<text x="769.84" y="3264" font-size="12.5" font-weight="700" fill="#c05621" class="halo">[5분마다 · OrderReconciliationScheduler]</text>
+<rect x="25" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="100" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">사용자 브라우저</text>
+<text x="100" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(Next.js)</text>
+<rect x="197" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="272" y="3612" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderController</text>
+<rect x="369" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="444" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">IdempotencyAop</text>
+<text x="444" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(@Idempotent)</text>
+<rect x="541" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="616" y="3612" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderService</text>
+<rect x="713" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="788" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">OrderTxHandler</text>
+<text x="788" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(@Transactional)</text>
+<rect x="885" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="960" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Redis</text>
+<text x="960" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(Redisson 락·캐시)</text>
+<rect x="1057" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="1132" y="3612" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">MySQL</text>
+<rect x="1229" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="1304" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">PG사</text>
+<text x="1304" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(카카오·네이버·토스)</text>
+<rect x="1401" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="1476" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">Outbox → Email</text>
+<text x="1476" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(Listener·Service)</text>
+<rect x="1573" y="3582" width="150" height="50" rx="8" fill="#1f4e79"/>
+<text x="1648" y="3603" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">스케줄러</text>
+<text x="1648" y="3620" text-anchor="middle" font-size="11" fill="#cfe0f1">(배치)</text>
+<line x1="40" y1="3652" x2="80" y2="3652" stroke="#1f4e79" stroke-width="1.6" /><path d="M80 3652 l-10 -5 l0 10 z" fill="#1f4e79"/>
+<text x="88" y="3656" font-size="12"  fill="#52606d">호출</text>
+<line x1="120" y1="3652" x2="160" y2="3652" stroke="#7b8794" stroke-width="1.6" stroke-dasharray="6 4"/><path d="M160 3652 l-10 -5 l0 10 z" fill="#7b8794"/>
+<text x="168" y="3656" font-size="12"  fill="#52606d">응답 / 예외</text>
+<line x1="250" y1="3652" x2="290" y2="3652" stroke="#1a7f37" stroke-width="1.6" /><path d="M290 3652 l-10 -5 l0 10 z" fill="#1a7f37"/>
+<text x="298" y="3656" font-size="12" font-weight="700" fill="#1a7f37">이번 수정으로 추가·변경</text>
+<text x="460" y="3656" font-size="12" fill="#52606d">[TX] = OrderTxHandler의 @Transactional 메서드 (짧은 트랜잭션 단위)</text>
 </svg>
